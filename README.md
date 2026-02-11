@@ -86,7 +86,26 @@ The "Stats" tab shows:
 - Needs Accessibility permissions for app monitoring
 - Pure Swift Package Manager project (no Xcode project needed)
 
+## Download
+
+Get the latest release from [GitHub Releases](https://github.com/Mirxa27/AppLocker/releases).
+
+1. Download `AppLocker-X.X.dmg` from the latest release
+2. Open the DMG and drag AppLocker to your Applications folder
+3. Launch AppLocker and follow the setup process
+
 ## Build from Source
+
+### Quick Build (Using Makefile)
+
+```bash
+cd ~/AppLocker
+make build      # Debug build
+make release    # Release build with DMG
+make install    # Install to /Applications
+```
+
+### Manual Build
 
 ```bash
 cd ~/AppLocker
@@ -98,6 +117,19 @@ To create the app bundle:
 ```bash
 swift build -c release
 cp -r AppLocker.app/Contents/Resources .build/arm64-apple-macosx/release/
+```
+
+### Creating a Release
+
+See [RELEASE.md](RELEASE.md) for detailed release instructions.
+
+Quick release:
+
+```bash
+make version VERSION=3.1
+git add -A && git commit -m "Release v3.1"
+git tag -a v3.1 -m "Release v3.1"
+git push origin main && git push origin v3.1
 ```
 
 ## Important
