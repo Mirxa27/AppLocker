@@ -347,8 +347,7 @@ class AppMonitor: ObservableObject {
             lastDebugLog = now
         }
         
-        // Skip ourselves
-        if bundleID == Bundle.main.bundleIdentifier { return }
+        // Note: We check ourselves too, but won't block ourselves
         
         // Check if temporarily unlocked
         if temporarilyUnlockedApps.contains(bundleID) { return }
