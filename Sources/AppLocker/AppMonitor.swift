@@ -1,3 +1,4 @@
+#if os(macOS)
 // AppMonitor.swift
 // Monitors and blocks locked applications
 
@@ -6,101 +7,6 @@ import AppKit
 import ApplicationServices
 import Combine
 import SwiftUI
-
-// MARK: - Data Models
-
-struct LockedAppInfo: Codable, Identifiable, Hashable {
-    var id: String { bundleID }
-    let bundleID: String
-    let displayName: String
-    let path: String?
-    let dateAdded: Date
-    var category: String?
-    var schedule: LockSchedule?
-    
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(bundleID)
-    }
-    
-    static func == (lhs: LockedAppInfo, rhs: LockedAppInfo) -> Bool {
-        lhs.bundleID == rhs.bundleID
-    }
-}
-
-struct LockSchedule: Codable, Hashable {
-    var enabled: Bool = false
-    var startHour: Int = 0
-    var startMinute: Int = 0
-    var endHour: Int = 23
-    var endMinute: Int = 59
-    var activeDays: Set<Int> = [1, 2, 3, 4, 5, 6, 7]
-    
-    var startTimeFormatted: String {
-        String(format: "%02d:%02d", startHour, startMinute)
-    }
-    
-    var endTimeFormatted: String {
-        String(format: "%02d:%02d", endHour, endMinute)
-    }
-    
-    func isActiveNow() -> Bool {
-        guard enabled else { return true }
-        let calendar = Calendar.current
-        let now = Date()
-        let weekday = calendar.component(.weekday, from: now)
-        guard activeDays.contains(weekday) else { return false }
-        let currentMinutes = calendar.component(.hour, from: now) * 60 + calendar.component(.minute, from: now)
-        let startMinutes = startHour * 60 + startMinute
-        let endMinutes = endHour * 60 + endMinute
-        if startMinutes <= endMinutes {
-            return currentMinutes >= startMinutes && currentMinutes <= endMinutes
-        } else {
-            return currentMinutes >= startMinutes || currentMinutes <= endMinutes
-        }
-    }
-}
-
-struct AppCategory: Codable, Identifiable, Hashable {
-    var id: String { name }
-    let name: String
-    let icon: String
-    var appBundleIDs: [String]
-    
-    static let defaults: [AppCategory] = [
-        AppCategory(name: "Social Media", icon: "bubble.left.and.bubble.right.fill", appBundleIDs: []),
-        AppCategory(name: "Games", icon: "gamecontroller.fill", appBundleIDs: []),
-        AppCategory(name: "Entertainment", icon: "play.tv.fill", appBundleIDs: []),
-        AppCategory(name: "Productivity", icon: "briefcase.fill", appBundleIDs: []),
-        AppCategory(name: "Communication", icon: "message.fill", appBundleIDs: []),
-        AppCategory(name: "Browsers", icon: "globe", appBundleIDs: []),
-    ]
-}
-
-struct UsageRecord: Codable {
-    let bundleID: String
-    let appName: String
-    let timestamp: Date
-    let event: UsageEvent
-    
-    enum UsageEvent: String, Codable {
-        case blocked
-        case unlocked
-        case failedAttempt
-        case launched
-    }
-}
-
-struct UsageStats: Identifiable {
-    var id: String { bundleID }
-    let bundleID: String
-    let appName: String
-    var blockedCount: Int
-    var unlockedCount: Int
-    var failedAttemptCount: Int
-    var lastBlocked: Date?
-}
-
-// MARK: - App Monitor
 
 class AppMonitor: ObservableObject {
     static let shared = AppMonitor()
@@ -141,6 +47,7 @@ class AppMonitor: ObservableObject {
     private var blockingWindow: NSWindow?
     
     private init() {
+        NotificationCenter.default.addObserver(self, selector: #selector(handleRemoteCommand(_:)), name: NSNotification.Name("RemoteCommandReceived"), object: nil)
         loadLockedApps()
         loadCategories()
         loadUsageRecords()
@@ -699,17 +606,6 @@ class AppMonitor: ObservableObject {
     
     // MARK: - Export / Import
     
-    struct AppLockerExport: Codable {
-        let version: String
-        let exportDate: Date
-        let lockedApps: [LockedAppInfo]
-        let categories: [AppCategory]
-        let settings: ExportedSettings
-    }
-    
-    struct ExportedSettings: Codable {
-        let unlockDuration: TimeInterval
-        let autoLockOnSleep: Bool
         let blockingOverlayDuration: TimeInterval
     }
     
@@ -836,45 +732,38 @@ class AppMonitor: ObservableObject {
     }
 }
 
-// MARK: - Blocking Overlay View
+    @objc func handleRemoteCommand(_ notification: Notification) {
+        guard let command = notification.object as? RemoteCommand else { return }
 
-struct BlockingOverlayView: View {
-    let appName: String
-    @State private var pulseAnimation = false
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            Spacer()
-            
-            ZStack {
-                Circle()
-                    .fill(Color.red.opacity(0.2))
-                    .frame(width: 160, height: 160)
-                    .scaleEffect(pulseAnimation ? 1.2 : 1.0)
-                    .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: pulseAnimation)
-                
-                Image(systemName: "lock.shield.fill")
-                    .font(.system(size: 80))
-                    .foregroundColor(.red)
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            switch command.action {
+            case .lockAll:
+                self.lockMacScreen()
+            case .unlockAll:
+                // Temporarily unlock all locked apps
+                for app in self.lockedApps {
+                    self.temporarilyUnlock(bundleID: app.bundleID)
+                }
+                self.addLog("Remote Command: Unlock All executed")
+            case .unlockApp:
+                if let bundleID = command.bundleID {
+                    self.temporarilyUnlock(bundleID: bundleID)
+                    self.addLog("Remote Command: Unlock \(bundleID) executed")
+                }
             }
-            
-            Text("ACCESS BLOCKED")
-                .font(.system(size: 36, weight: .heavy))
-                .foregroundColor(.white)
-            
-            Text("\"\(appName)\" has been terminated.")
-                .font(.title2)
-                .foregroundColor(.white.opacity(0.8))
-            
-            Text("This app is locked by AppLocker.\nUnlock it from the AppLocker window.")
-                .multilineTextAlignment(.center)
-                .foregroundColor(.white.opacity(0.6))
-            
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .onAppear {
-            pulseAnimation = true
         }
     }
+
+    private func lockMacScreen() {
+        let source = """
+        tell application "System Events" to sleep
+        """
+        if let script = NSAppleScript(source: source) {
+            var error: NSDictionary?
+            script.executeAndReturnError(&error)
+        }
+        self.addLog("Remote Command: Lock Screen executed")
+    }
 }
+#endif

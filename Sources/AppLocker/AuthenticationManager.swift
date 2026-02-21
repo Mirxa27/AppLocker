@@ -1,5 +1,5 @@
 // AuthenticationManager.swift
-// Manages passcode and biometric authentication with lockout protection
+// Handles passcode verification, biometrics, and lockout logic
 
 import Foundation
 import LocalAuthentication
@@ -10,25 +10,22 @@ class AuthenticationManager: ObservableObject {
     static let shared = AuthenticationManager()
     
     @Published var isAuthenticated = false
-    @Published var authenticationError: String?
-    @Published var failedAttempts: Int = 0
     @Published var isLockedOut = false
     @Published var lockoutEndTime: Date?
+    @Published var failedAttempts = 0
+    @Published var authenticationError: String?
     
-    private let passcodeKey = "com.applocker.passcode"
-    private let saltKey = "com.applocker.salt"
-    private let keychainService = "com.applocker.auth"
-    
-    // Lockout settings
-    private let maxFailedAttempts = 5
+    private let keychainService = "com.mirxa.AppLocker"
+    private let passcodeKey = "passcode"
+    private let saltKey = "passcode_salt"
     private let lockoutDurations: [Int: TimeInterval] = [
-        5: 30,      // 5 failures = 30 seconds
-        8: 120,     // 8 failures = 2 minutes
-        10: 300,    // 10 failures = 5 minutes
-        15: 900,    // 15 failures = 15 minutes
-        20: 3600    // 20 failures = 1 hour
+        5: 30,      // 30 seconds after 5 attempts
+        8: 120,     // 2 minutes after 8 attempts
+        10: 300,    // 5 minutes after 10 attempts
+        15: 900,    // 15 minutes after 15 attempts
+        20: 3600    // 1 hour after 20 attempts
     ]
-    
+    private let maxFailedAttempts = 5
     private var lockoutTimer: Timer?
     
     private init() {
@@ -43,13 +40,14 @@ class AuthenticationManager: ObservableObject {
     }
     
     func setPasscode(_ passcode: String) -> Bool {
-        guard passcode.count >= 4 else { return false }
-        
-        // Generate salt
+        // Generate new random salt
         var salt = Data(count: 32)
-        _ = salt.withUnsafeMutableBytes { SecRandomCopyBytes(kSecRandomDefault, 32, $0.baseAddress!) }
+        let result = salt.withUnsafeMutableBytes {
+            SecRandomCopyBytes(kSecRandomDefault, 32, -bash.baseAddress!)
+        }
+
+        guard result == errSecSuccess else { return false }
         
-        // Hash passcode with salt
         let hashedPasscode = hashPasscode(passcode, salt: salt)
         
         // Store in Keychain
@@ -116,6 +114,13 @@ class AuthenticationManager: ObservableObject {
         return Data(hash)
     }
     
+    // Helper for per-app passcode
+    func hashPasscodeForStorage(_ passcode: String) -> String? {
+        guard let salt = getSalt() else { return nil }
+        let data = hashPasscode(passcode, salt: salt)
+        return data.base64EncodedString()
+    }
+
     private func getStoredPasscode() -> Data? {
         return retrieveFromKeychain(key: passcodeKey)
     }
@@ -130,6 +135,11 @@ class AuthenticationManager: ObservableObject {
         failedAttempts += 1
         saveFailedAttempts()
         
+        // Capture intruder after 2 failed attempts
+        if failedAttempts >= 2 {
+            IntruderManager.shared.captureIntruder()
+        }
+
         // Check if we should escalate lockout
         let sortedThresholds = lockoutDurations.keys.sorted()
         var applicableDuration: TimeInterval = 0
@@ -261,12 +271,24 @@ class AuthenticationManager: ObservableObject {
     
     // MARK: - Authentication
     
-    func authenticate(withPasscode passcode: String) -> Bool {
+    func authenticate(withPasscode passcode: String, forAppHash appHash: String? = nil) -> Bool {
         if isLockedOut {
             authenticationError = "Too many attempts. Try again in \(lockoutRemainingFormatted)"
             return false
         }
         
+        // Check per-app passcode if provided
+        if let appHash = appHash, let salt = getSalt() {
+            let inputHash = hashPasscode(passcode, salt: salt).base64EncodedString()
+            if inputHash == appHash {
+                isAuthenticated = true
+                authenticationError = nil
+                resetFailedAttempts()
+                return true
+            }
+        }
+
+        // Fallback to master passcode
         if verifyPasscode(passcode) {
             isAuthenticated = true
             authenticationError = nil

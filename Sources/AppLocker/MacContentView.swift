@@ -1,3 +1,4 @@
+#if os(macOS)
 // ContentView.swift
 // Main application view with enhanced app locking, schedules, usage stats, and settings
 
@@ -31,7 +32,7 @@ struct AppIconView: NSViewRepresentable {
     func updateNSView(_ nsView: NSImageView, context: Context) {}
 }
 
-struct ContentView: View {
+struct MacContentView: View {
     @StateObject private var authManager = AuthenticationManager.shared
     @StateObject private var appMonitor = AppMonitor.shared
     @StateObject private var notificationManager = NotificationManager.shared
@@ -1391,3 +1392,4 @@ struct StatBadge: View {
         }
     }
 }
+#endif
