@@ -7,7 +7,7 @@ import UserNotifications
 import AppKit
 #endif
 
-class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
+class NotificationManager: NSObject, ObservableObject {
     static let shared = NotificationManager()
     
     @Published var notificationsEnabled = true
@@ -18,11 +18,10 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
     private let notificationsEnabledKey = "com.applocker.notificationsEnabled"
     private let crossDeviceEnabledKey = "com.applocker.crossDeviceEnabled"
     
-    private override init() {
+    override private init() {
         super.init()
         loadSettings()
         loadHistory()
-        requestNotificationPermissions()
 
         // Listen for iCloud KV changes
         NotificationCenter.default.addObserver(
@@ -32,6 +31,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
             object: NSUbiquitousKeyValueStore.default
         )
         NSUbiquitousKeyValueStore.default.synchronize()
+
         UNUserNotificationCenter.current().delegate = self
     }
     
@@ -266,21 +266,6 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
              }
         }
     }
-
-    // MARK: - UNUserNotificationCenterDelegate
-
-    func userNotificationCenter(_ center: UNUserNotificationCenter,
-                               willPresent notification: UNNotification,
-                               withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        completionHandler([.banner, .sound, .badge])
-    }
-
-    func userNotificationCenter(_ center: UNUserNotificationCenter,
-                               didReceive response: UNNotificationResponse,
-                               withCompletionHandler completionHandler: @escaping () -> Void) {
-        // Handle actions
-        completionHandler()
-    }
     
     // MARK: - History
     
@@ -324,5 +309,21 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
     func saveSettings() {
         UserDefaults.standard.set(notificationsEnabled, forKey: notificationsEnabledKey)
         UserDefaults.standard.set(crossDeviceEnabled, forKey: crossDeviceEnabledKey)
+    }
+}
+
+// MARK: - UNUserNotificationCenterDelegate
+extension NotificationManager: UNUserNotificationCenterDelegate {
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                               willPresent notification: UNNotification,
+                               withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner, .sound, .badge])
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                               didReceive response: UNNotificationResponse,
+                               withCompletionHandler completionHandler: @escaping () -> Void) {
+        // Handle actions
+        completionHandler()
     }
 }

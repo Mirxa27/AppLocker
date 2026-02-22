@@ -7,7 +7,7 @@ import AppKit
 import UIKit
 #endif
 
-class IntruderManager: NSObject, AVCapturePhotoCaptureDelegate {
+class IntruderManager: NSObject {
     static let shared = IntruderManager()
 
     private let captureSession = AVCaptureSession()
@@ -91,22 +91,6 @@ class IntruderManager: NSObject, AVCapturePhotoCaptureDelegate {
         }
     }
 
-    // MARK: - AVCapturePhotoCaptureDelegate
-
-    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        DispatchQueue.global(qos: .background).async { [weak self] in
-            self?.captureSession.stopRunning()
-        }
-
-        guard let imageData = photo.fileDataRepresentation() else { return }
-
-        // Save locally
-        saveIntruderPhoto(data: imageData)
-
-        // Notify
-        NotificationManager.shared.sendCrossDeviceNotification(appName: "AppLocker", bundleID: "com.applocker.intruder", isFailed: true)
-    }
-
     private func saveIntruderPhoto(data: Data) {
         let filename = "intruder-\(Date().timeIntervalSince1970).jpg"
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -124,7 +108,24 @@ class IntruderManager: NSObject, AVCapturePhotoCaptureDelegate {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         guard let files = try? FileManager.default.contentsOfDirectory(at: docs, includingPropertiesForKeys: nil) else { return [] }
 
-        return files.filter { $0.lastPathComponent.hasPrefix("intruder-") }
-                    .sorted { $0.lastPathComponent > $1.lastPathComponent }
+        return files.filter { -bash.lastPathComponent.hasPrefix("intruder-") }
+                    .sorted { -bash.lastPathComponent > .lastPathComponent }
+    }
+}
+
+// MARK: - AVCapturePhotoCaptureDelegate
+extension IntruderManager: AVCapturePhotoCaptureDelegate {
+    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            self?.captureSession.stopRunning()
+        }
+
+        guard let imageData = photo.fileDataRepresentation() else { return }
+
+        // Save locally
+        saveIntruderPhoto(data: imageData)
+
+        // Notify
+        NotificationManager.shared.sendCrossDeviceNotification(appName: "AppLocker", bundleID: "com.applocker.intruder", isFailed: true)
     }
 }
