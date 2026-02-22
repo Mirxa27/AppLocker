@@ -3,7 +3,7 @@ import SwiftUI
 import UserNotifications
 
 @main
-struct AppLockerApp: App {
+struct iOSAppLockerApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {

@@ -7,7 +7,7 @@ import LocalAuthentication
 import UserNotifications
 
 @main
-struct AppLockerApp: App {
+struct MacAppLockerApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
     var body: some Scene {
