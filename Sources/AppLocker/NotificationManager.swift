@@ -7,7 +7,7 @@ import UserNotifications
 import AppKit
 #endif
 
-class NotificationManager: NSObject, ObservableObject {
+class NotificationManager: ObservableObject {
     static let shared = NotificationManager()
     
     @Published var notificationsEnabled = true
@@ -18,8 +18,10 @@ class NotificationManager: NSObject, ObservableObject {
     private let notificationsEnabledKey = "com.applocker.notificationsEnabled"
     private let crossDeviceEnabledKey = "com.applocker.crossDeviceEnabled"
     
-    override private init() {
-        super.init()
+    // Delegate handling via composition to avoid compiler crashes with NSObject + ObservableObject
+    private var notificationDelegate: NotificationDelegate?
+
+    private init() {
         loadSettings()
         loadHistory()
 
@@ -32,7 +34,9 @@ class NotificationManager: NSObject, ObservableObject {
         )
         NSUbiquitousKeyValueStore.default.synchronize()
 
-        UNUserNotificationCenter.current().delegate = self
+        // Set up delegate
+        self.notificationDelegate = NotificationDelegate()
+        UNUserNotificationCenter.current().delegate = self.notificationDelegate
     }
     
     // MARK: - Permissions
@@ -312,8 +316,8 @@ class NotificationManager: NSObject, ObservableObject {
     }
 }
 
-// MARK: - UNUserNotificationCenterDelegate
-extension NotificationManager: UNUserNotificationCenterDelegate {
+// MARK: - Notification Delegate Class
+private class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                willPresent notification: UNNotification,
                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
