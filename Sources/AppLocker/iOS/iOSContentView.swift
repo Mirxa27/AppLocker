@@ -40,7 +40,7 @@ struct iOSContentView: View {
                         ForEach(notificationManager.notificationHistory) { record in
                             HStack {
                                 Image(systemName: record.type.icon)
-                                    .foregroundColor(Color(record.type.color))
+                                    .foregroundColor(Color(hex: record.type.color))
                                 VStack(alignment: .leading) {
                                     Text(record.appName)
                                         .font(.headline)
@@ -54,11 +54,11 @@ struct iOSContentView: View {
                 }
             }
             .navigationTitle("AppLocker Remote")
-            .sheet(isPresented: ) {
+            .sheet(isPresented: $showingUnlockSheet) {
                 VStack(spacing: 20) {
                     Text("Unlock App")
                         .font(.headline)
-                    TextField("Bundle ID (e.g. com.apple.Safari)", text: )
+                    TextField("Bundle ID (e.g. com.apple.Safari)", text: $targetBundleID)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .padding()
                         .autocapitalization(.none)
@@ -79,8 +79,8 @@ struct iOSContentView: View {
 }
 
 extension Color {
-    init(_ string: String) {
-        switch string {
+    init(hex: String) {
+        switch hex {
         case "red": self = .red
         case "green": self = .green
         case "orange": self = .orange

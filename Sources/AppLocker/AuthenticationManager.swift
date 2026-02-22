@@ -6,6 +6,7 @@ import LocalAuthentication
 import Security
 import CryptoKit
 
+@MainActor
 class AuthenticationManager: ObservableObject {
     static let shared = AuthenticationManager()
     
@@ -256,7 +257,7 @@ class AuthenticationManager: ObservableObject {
         
         context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics,
                               localizedReason: reason) { success, error in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 if success {
                     self.isAuthenticated = true
                     self.resetFailedAttempts()
