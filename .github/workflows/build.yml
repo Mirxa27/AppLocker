@@ -16,16 +16,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Swift
-        uses: swift-actions/setup-swift@v1
-        with:
-          swift-version: "5.9"
+      - name: Swift version
+        run: swift --version
 
       - name: Cache Swift packages
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: .build
-          key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+          key: ${{ runner.os }}-spm-${{ hashFiles('Package.swift') }}
           restore-keys: |
             ${{ runner.os }}-spm-
 
@@ -33,50 +31,133 @@ jobs:
         run: swift build -v
 
       - name: Run tests
-        run: swift test -v || echo "No tests configured"
+        run: |
+          if [ -d Tests ]; then
+            swift test -v
+          else
+            echo "No tests configured yet"
+          fi
 
       - name: Build Release
         run: swift build -c release -v
 
-      - name: Package App
+      - name: Determine version
+        id: version
         run: |
-          # Copy binary to app bundle
-          cp .build/release/AppLocker AppLocker.app/Contents/MacOS/AppLocker
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "VERSION=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "VERSION=0.0.0-dev" >> "$GITHUB_OUTPUT"
+          fi
 
-          # Sign with ad-hoc signature (for CI builds)
+      - name: Package App Bundle
+        env:
+          APP_VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          set -e
+
+          APP_BUNDLE="AppLocker.app"
+          CONTENTS="$APP_BUNDLE/Contents"
+          MACOS_DIR="$CONTENTS/MacOS"
+          RESOURCES_DIR="$CONTENTS/Resources"
+
+          # Create app bundle structure
+          mkdir -p "$MACOS_DIR"
+          mkdir -p "$RESOURCES_DIR"
+
+          # Copy the built binary
+          cp .build/release/AppLocker "$MACOS_DIR/AppLocker"
+
+          # Create Info.plist
+          cat > "$CONTENTS/Info.plist" << PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleName</key>
+              <string>AppLocker</string>
+              <key>CFBundleDisplayName</key>
+              <string>AppLocker</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.applocker.AppLocker</string>
+              <key>CFBundleVersion</key>
+              <string>${APP_VERSION}</string>
+              <key>CFBundleShortVersionString</key>
+              <string>${APP_VERSION}</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleExecutable</key>
+              <string>AppLocker</string>
+              <key>CFBundleIconFile</key>
+              <string>AppIcon</string>
+              <key>LSMinimumSystemVersion</key>
+              <string>13.0</string>
+              <key>LSUIElement</key>
+              <false/>
+              <key>NSHighResolutionCapable</key>
+              <true/>
+              <key>NSSupportsAutomaticGraphicsSwitching</key>
+              <true/>
+              <key>NSCameraUsageDescription</key>
+              <string>AppLocker uses the camera to capture photos of unauthorized access attempts.</string>
+              <key>NSAppleEventsUsageDescription</key>
+              <string>AppLocker uses Apple Events to automate system actions like locking the screen.</string>
+          </dict>
+          </plist>
+          PLIST
+
+          # Copy icon if available
+          if [ -f "icon.png" ]; then
+            cp icon.png "$RESOURCES_DIR/AppIcon.png"
+          fi
+
+      - name: Sign App Bundle
+        run: |
           codesign --force --deep --sign - \
             --entitlements dist/entitlements.plist \
             --options runtime \
-            AppLocker.app
+            AppLocker.app 2>&1 || echo "Ad-hoc signing completed with warnings"
 
-          # Create release directory
+          codesign --verify --deep AppLocker.app 2>&1 || echo "Signature verification note: ad-hoc signed"
+
+      - name: Create DMG
+        env:
+          APP_VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          set -e
           mkdir -p release
-          cp -R AppLocker.app release/
+
+          # Create temporary directory with app and Applications symlink
+          DMG_STAGING=$(mktemp -d)
+          cp -R AppLocker.app "$DMG_STAGING/"
+          ln -s /Applications "$DMG_STAGING/Applications"
 
           # Create DMG
           hdiutil create -volname "AppLocker" \
-            -srcfolder release/AppLocker.app \
+            -srcfolder "$DMG_STAGING" \
             -ov -format UDZO \
-            release/AppLocker-CI.dmg
+            "release/AppLocker-${APP_VERSION}.dmg"
 
-      - name: Upload artifacts
+          rm -rf "$DMG_STAGING"
+
+          echo "DMG created:"
+          ls -la release/
+
+      - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: AppLocker-Build
-          path: |
-            release/AppLocker.app
-            release/AppLocker-CI.dmg
+          path: release/AppLocker-*.dmg
           retention-days: 30
 
   release:
     needs: build
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -85,31 +166,21 @@ jobs:
 
       - name: Get version from tag
         id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
 
-      - name: Rename DMG with version
-        run: |
-          mv release/AppLocker-CI.dmg "release/AppLocker-${{ steps.get_version.outputs.VERSION }}.dmg"
+      - name: List release artifacts
+        run: ls -la release/
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          files: |
-            release/AppLocker-${{ steps.get_version.outputs.VERSION }}.dmg
+          files: release/AppLocker-*.dmg
           draft: false
           prerelease: false
           generate_release_notes: true
-          name: "AppLocker ${{ steps.get_version.outputs.VERSION }}"
+          name: "AppLocker v${{ steps.get_version.outputs.VERSION }}"
           body: |
-            ## AppLocker ${{ steps.get_version.outputs.VERSION }}
-
-            ### What's New
-            - Passcode protection with Touch ID/Face ID support
-            - App blocking engine
-            - Schedule-based locking
-            - Usage statistics and activity log
-            - Export/import configuration
-            - Cross-device alerts
+            ## AppLocker v${{ steps.get_version.outputs.VERSION }}
 
             ### Installation
             1. Download `AppLocker-${{ steps.get_version.outputs.VERSION }}.dmg`

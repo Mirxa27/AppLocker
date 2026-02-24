@@ -108,8 +108,8 @@ class IntruderManager: NSObject {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         guard let files = try? FileManager.default.contentsOfDirectory(at: docs, includingPropertiesForKeys: nil) else { return [] }
 
-        return files.filter { -bash.lastPathComponent.hasPrefix("intruder-") }
-                    .sorted { -bash.lastPathComponent > .lastPathComponent }
+        return files.filter { $0.lastPathComponent.hasPrefix("intruder-") }
+                    .sorted { $0.lastPathComponent > $1.lastPathComponent }
     }
 }
 

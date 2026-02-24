@@ -12,8 +12,8 @@ make release
 # Install to /Applications
 make install
 
-# Create new version
-make version VERSION=3.1
+# Print release tagging instructions
+make tag-release VERSION=3.1
 ```
 
 ## 📦 Creating a Release
@@ -21,15 +21,12 @@ make version VERSION=3.1
 ### Option 1: Automated (GitHub Actions) - RECOMMENDED
 
 ```bash
-# 1. Update version
-make version VERSION=3.1
-
-# 2. Commit and push
+# 1. Commit your changes
 git add -A
 git commit -m "Release v3.1"
 git push origin main
 
-# 3. Create and push tag
+# 2. Create and push tag (version derived from tag)
 git tag -a v3.1 -m "Release v3.1"
 git push origin v3.1
 ```

@@ -16,8 +16,11 @@ Package.resolved
 *.zip
 *.tar.gz
 
-# Distribution
-dist/
+# Distribution build outputs
+dist/*.app
+dist/*.dmg
+dist/*.zip
+release/
 
 # macOS
 .DS_Store

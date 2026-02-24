@@ -44,7 +44,7 @@ class AuthenticationManager: ObservableObject {
         // Generate new random salt
         var salt = Data(count: 32)
         let result = salt.withUnsafeMutableBytes {
-            SecRandomCopyBytes(kSecRandomDefault, 32, -bash.baseAddress!)
+            SecRandomCopyBytes(kSecRandomDefault, 32, $0.baseAddress!)
         }
 
         guard result == errSecSuccess else { return false }

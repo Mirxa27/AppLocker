@@ -126,7 +126,7 @@ See [RELEASE.md](RELEASE.md) for detailed release instructions.
 Quick release:
 
 ```bash
-make version VERSION=3.1
+make tag-release VERSION=3.1
 git add -A && git commit -m "Release v3.1"
 git tag -a v3.1 -m "Release v3.1"
 git push origin main && git push origin v3.1
