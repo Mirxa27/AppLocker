@@ -6,28 +6,22 @@ This document describes how to create a new release of AppLocker.
 
 The easiest way to release is using GitHub Actions:
 
-1. **Update version** in `AppLocker.app/Contents/Info.plist`:
-
-   ```bash
-   make version VERSION=3.1
-   ```
-
-2. **Commit and push**:
+1. **Commit and push your changes**:
 
    ```bash
    git add -A
-   git commit -m "Bump version to 3.1"
+   git commit -m "Prepare release 3.1"
    git push origin main
    ```
 
-3. **Create and push a tag**:
+2. **Create and push a tag** (the version is derived from the tag):
 
    ```bash
    git tag -a v3.1 -m "Release v3.1"
    git push origin v3.1
    ```
 
-4. **GitHub Actions will automatically**:
+3. **GitHub Actions will automatically**:
    - Build the release binary
    - Create a DMG installer
    - Create a GitHub Release with the DMG attached
@@ -78,7 +72,7 @@ We follow [Semantic Versioning](https://semver.org/):
 - **MINOR** - New features, backwards compatible (e.g., 3.0.0 → 3.1.0)
 - **PATCH** - Bug fixes (e.g., 3.0.0 → 3.0.1)
 
-Current version: Check `AppLocker.app/Contents/Info.plist`
+Current version: Derived from git tag (e.g., `v3.1` → version `3.1`)
 
 ## Code Signing
 
@@ -109,7 +103,7 @@ xcrun notarytool submit AppLocker-X.X.dmg \
 
 Before releasing:
 
-- [ ] Version number updated in `Info.plist`
+- [ ] Version tag created (e.g., `v3.1`)
 - [ ] `CHANGELOG.md` updated with changes
 - [ ] README updated if needed
 - [ ] All features tested on clean macOS install

@@ -569,11 +569,11 @@ struct AddAppsView: View {
                 }
             }
             .onAppear {
-                runningApps = NSWorkspace.shared.runningApplications.filter { -bash.activationPolicy == .regular }
+                runningApps = NSWorkspace.shared.runningApplications.filter { $0.activationPolicy == .regular }
             }
 
             Button("Refresh Running Apps") {
-                runningApps = NSWorkspace.shared.runningApplications.filter { -bash.activationPolicy == .regular }
+                runningApps = NSWorkspace.shared.runningApplications.filter { $0.activationPolicy == .regular }
             }
             .padding()
         }

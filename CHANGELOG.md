@@ -7,11 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Planned
+### Fixed
 
-- Fix app blocking functionality
-- Improve monitoring reliability
-- Add more comprehensive debug logging
+- Fixed syntax errors in AuthenticationManager.swift (SecRandomCopyBytes buffer parameter)
+- Fixed syntax errors in MacContentView.swift (running apps filter predicate)
+- Fixed syntax errors in IntruderManager.swift (file filtering and sorting)
+- Fixed GitHub Actions workflow to properly create app bundle structure and DMG
+- Fixed build-release.sh to create app bundle structure from scratch if needed
+- Added missing entitlements.plist for code signing
+- Updated actions/cache to v4 and softprops/action-gh-release to v2
+- Fixed release job to run on ubuntu-latest (no macOS needed for artifact upload)
+- Fixed Makefile version target to not depend on pre-existing app bundle
+
+### Improved
+
+- Release workflow now creates versioned DMG files (e.g. AppLocker-3.1.dmg)
+- DMG includes Applications symlink for drag-and-drop installation
+- Build workflow generates Info.plist with version from git tag
+- Added proper permissions for GitHub Release creation
 
 ## [3.0.0] - 2025-02-11
 

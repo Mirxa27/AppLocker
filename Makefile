@@ -38,14 +38,11 @@ version:
 		exit 1; \
 	fi
 	@echo "Creating version $(VERSION)..."
-	@# Update Info.plist
-	@/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $(VERSION)" AppLocker.app/Contents/Info.plist
-	@/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(VERSION)" AppLocker.app/Contents/Info.plist
-	@echo "Updated version to $(VERSION)"
 	@echo "Next steps:"
-	@echo "  1. Commit changes: git add -A && git commit -m 'Bump version to $(VERSION)'"
+	@echo "  1. Commit changes: git add -A && git commit -m 'Release v$(VERSION)'"
 	@echo "  2. Create tag: git tag -a v$(VERSION) -m 'Release v$(VERSION)'"
 	@echo "  3. Push: git push origin main && git push origin v$(VERSION)"
+	@echo "  4. GitHub Actions will build and create a release with the DMG"
 
 # Quick run for development
 run: build
