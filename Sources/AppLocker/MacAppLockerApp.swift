@@ -1,3 +1,4 @@
+#if os(macOS)
 // AppLockerApp.swift
 // Main app entry point with menu bar support
 
@@ -6,12 +7,12 @@ import LocalAuthentication
 import UserNotifications
 
 @main
-struct AppLockerApp: App {
+struct MacAppLockerApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MacContentView()
                 .frame(minWidth: 800, minHeight: 550)
         }
         .windowStyle(.automatic)
@@ -168,3 +169,4 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         UNUserNotificationCenter.current().add(request)
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if os(macOS)
 // AppMonitor.swift
 // Monitors and blocks locked applications
 
@@ -7,594 +8,197 @@ import ApplicationServices
 import Combine
 import SwiftUI
 
-// MARK: - Data Models
-
-struct LockedAppInfo: Codable, Identifiable, Hashable {
-    var id: String { bundleID }
-    let bundleID: String
-    let displayName: String
-    let path: String?
-    let dateAdded: Date
-    var category: String?
-    var schedule: LockSchedule?
-    
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(bundleID)
-    }
-    
-    static func == (lhs: LockedAppInfo, rhs: LockedAppInfo) -> Bool {
-        lhs.bundleID == rhs.bundleID
-    }
-}
-
-struct LockSchedule: Codable, Hashable {
-    var enabled: Bool = false
-    var startHour: Int = 0
-    var startMinute: Int = 0
-    var endHour: Int = 23
-    var endMinute: Int = 59
-    var activeDays: Set<Int> = [1, 2, 3, 4, 5, 6, 7]
-    
-    var startTimeFormatted: String {
-        String(format: "%02d:%02d", startHour, startMinute)
-    }
-    
-    var endTimeFormatted: String {
-        String(format: "%02d:%02d", endHour, endMinute)
-    }
-    
-    func isActiveNow() -> Bool {
-        guard enabled else { return true }
-        let calendar = Calendar.current
-        let now = Date()
-        let weekday = calendar.component(.weekday, from: now)
-        guard activeDays.contains(weekday) else { return false }
-        let currentMinutes = calendar.component(.hour, from: now) * 60 + calendar.component(.minute, from: now)
-        let startMinutes = startHour * 60 + startMinute
-        let endMinutes = endHour * 60 + endMinute
-        if startMinutes <= endMinutes {
-            return currentMinutes >= startMinutes && currentMinutes <= endMinutes
-        } else {
-            return currentMinutes >= startMinutes || currentMinutes <= endMinutes
-        }
-    }
-}
-
-struct AppCategory: Codable, Identifiable, Hashable {
-    var id: String { name }
-    let name: String
-    let icon: String
-    var appBundleIDs: [String]
-    
-    static let defaults: [AppCategory] = [
-        AppCategory(name: "Social Media", icon: "bubble.left.and.bubble.right.fill", appBundleIDs: []),
-        AppCategory(name: "Games", icon: "gamecontroller.fill", appBundleIDs: []),
-        AppCategory(name: "Entertainment", icon: "play.tv.fill", appBundleIDs: []),
-        AppCategory(name: "Productivity", icon: "briefcase.fill", appBundleIDs: []),
-        AppCategory(name: "Communication", icon: "message.fill", appBundleIDs: []),
-        AppCategory(name: "Browsers", icon: "globe", appBundleIDs: []),
-    ]
-}
-
-struct UsageRecord: Codable {
-    let bundleID: String
-    let appName: String
-    let timestamp: Date
-    let event: UsageEvent
-    
-    enum UsageEvent: String, Codable {
-        case blocked
-        case unlocked
-        case failedAttempt
-        case launched
-    }
-}
-
-struct UsageStats: Identifiable {
-    var id: String { bundleID }
-    let bundleID: String
-    let appName: String
-    var blockedCount: Int
-    var unlockedCount: Int
-    var failedAttemptCount: Int
-    var lastBlocked: Date?
-}
-
-// MARK: - App Monitor
-
+@MainActor
 class AppMonitor: ObservableObject {
     static let shared = AppMonitor()
     
     @Published var lockedApps: [LockedAppInfo] = []
     @Published var isMonitoring = false
-    @Published var lastBlockedAppName: String?
-    @Published var lastBlockedBundleID: String?
-    @Published var showUnlockDialog = false
-    @Published var installedApps: [LockedAppInfo] = []
-    @Published var runningApps: [LockedAppInfo] = []
     @Published var blockLog: [String] = []
     @Published var categories: [AppCategory] = []
     @Published var usageRecords: [UsageRecord] = []
+    @Published var temporarilyUnlockedApps: Set<String> = [] // Bundle IDs
     
-    // Settings
-    @Published var unlockDuration: TimeInterval = 300
+    // Config
+    @Published var unlockDuration: TimeInterval = 300 // 5 minutes default
     @Published var autoLockOnSleep: Bool = true
-    @Published var blockingOverlayDuration: TimeInterval = 5.0
+    @Published var blockingOverlayDuration: TimeInterval = 3.0
     
-    // Temporary unlock tracking
-    var temporarilyUnlockedApps: Set<String> = []
+    // State for UI
+    @Published var showUnlockDialog = false
+    @Published var lastBlockedBundleID: String = ""
+    @Published var lastBlockedAppName: String?
     
-    // Blocking state
-    private var isCurrentlyBlocking = false
-    private var lastBlockedApp: String?
-    private var lastBlockTime: Date = .distantPast
+    private var monitoringTask: Task<Void, Never>?
+    private var cancellables = Set<AnyCancellable>()
     
-    private var pollTimer: Timer?
-    private var workspaceObservers: [NSObjectProtocol] = []
-    private var systemObservers: [NSObjectProtocol] = []
-    private let lockedAppsKey = "com.applocker.lockedAppsV2"
+    private let lockedAppsKey = "com.applocker.lockedApps"
+    private let logKey = "com.applocker.blockLog"
     private let categoriesKey = "com.applocker.categories"
     private let usageKey = "com.applocker.usageRecords"
-    private let logKey = "com.applocker.blockLog"
-    private let settingsPrefix = "com.applocker.settings."
-    
-    private var blockingWindow: NSWindow?
+    private let settingsUnlockDurationKey = "com.applocker.unlockDuration"
+    private let settingsAutoLockKey = "com.applocker.autoLockOnSleep"
+    private let settingsOverlayDurationKey = "com.applocker.blockingOverlayDuration"
     
     private init() {
+        loadSettings()
         loadLockedApps()
         loadCategories()
-        loadUsageRecords()
         loadBlockLog()
-        loadSettings()
-        refreshInstalledApps()
-        refreshRunningApps()
-        setupSystemObservers()
-    }
-    
-    // MARK: - Settings Persistence
-    
-    private func loadSettings() {
-        if let duration = UserDefaults.standard.object(forKey: settingsPrefix + "unlockDuration") as? TimeInterval {
-            unlockDuration = duration
-        }
-        if UserDefaults.standard.object(forKey: settingsPrefix + "autoLockOnSleep") != nil {
-            autoLockOnSleep = UserDefaults.standard.bool(forKey: settingsPrefix + "autoLockOnSleep")
-        }
-        if let overlayDuration = UserDefaults.standard.object(forKey: settingsPrefix + "overlayDuration") as? TimeInterval {
-            blockingOverlayDuration = overlayDuration
-        }
-    }
-    
-    func saveSettings() {
-        UserDefaults.standard.set(unlockDuration, forKey: settingsPrefix + "unlockDuration")
-        UserDefaults.standard.set(autoLockOnSleep, forKey: settingsPrefix + "autoLockOnSleep")
-        UserDefaults.standard.set(blockingOverlayDuration, forKey: settingsPrefix + "overlayDuration")
-    }
-    
-    // MARK: - System Observers
-    
-    private func setupSystemObservers() {
-        let ws = NSWorkspace.shared.notificationCenter
+        loadUsageRecords()
         
-        let sleepObs = ws.addObserver(forName: NSWorkspace.willSleepNotification, object: nil, queue: .main) { [weak self] _ in
-            self?.handleSystemSleep()
-        }
-        let screenObs = ws.addObserver(forName: NSWorkspace.screensDidSleepNotification, object: nil, queue: .main) { [weak self] _ in
-            self?.handleSystemSleep()
-        }
-        let switchObs = ws.addObserver(forName: NSWorkspace.sessionDidResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
-            self?.handleSystemSleep()
-        }
-        
-        systemObservers = [sleepObs, screenObs, switchObs]
-    }
-    
-    private func handleSystemSleep() {
-        guard autoLockOnSleep else { return }
-        temporarilyUnlockedApps.removeAll()
-        addLog("Auto-locked all apps (system sleep)")
-        AuthenticationManager.shared.logout()
-    }
-    
-    // MARK: - App Discovery
-    
-    func refreshInstalledApps() {
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            var apps: [LockedAppInfo] = []
-            let fileManager = FileManager.default
-            
-            let searchPaths = [
-                "/Applications",
-                "/Applications/Utilities",
-                "/System/Applications",
-                NSHomeDirectory() + "/Applications"
-            ]
-            
-            for searchPath in searchPaths {
-                guard let urls = try? fileManager.contentsOfDirectory(
-                    at: URL(fileURLWithPath: searchPath),
-                    includingPropertiesForKeys: nil,
-                    options: [.skipsHiddenFiles]
-                ) else { continue }
-                
-                for url in urls where url.pathExtension == "app" {
-                    if let bundle = Bundle(url: url),
-                       let bundleID = bundle.bundleIdentifier {
-                        let name = bundle.infoDictionary?["CFBundleDisplayName"] as? String
-                            ?? bundle.infoDictionary?["CFBundleName"] as? String
-                            ?? url.deletingPathExtension().lastPathComponent
-                        
-                        let isSystemFramework = bundleID.hasPrefix("com.apple.") &&
-                            (url.path.contains("/System/") || url.path.contains("/Library/"))
-                        
-                        if !apps.contains(where: { $0.bundleID == bundleID }) && !isSystemFramework {
-                            apps.append(LockedAppInfo(
-                                bundleID: bundleID,
-                                displayName: name,
-                                path: url.path,
-                                dateAdded: Date()
-                            ))
-                        }
+        // Listen for sleep notifications if enabled
+        NotificationCenter.default.publisher(for: NSWorkspace.willSleepNotification)
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    guard let self = self else { return }
+                    if self.autoLockOnSleep {
+                        self.temporarilyUnlockedApps.removeAll()
+                        self.addLog("Auto-locked all apps due to system sleep")
                     }
                 }
             }
+            .store(in: &cancellables)
             
-            DispatchQueue.main.async { [weak self] in
-                self?.installedApps = apps.sorted { $0.displayName.lowercased() < $1.displayName.lowercased() }
-            }
-        }
+        // Listen for remote commands
+        NotificationCenter.default.addObserver(self, selector: #selector(handleRemoteCommand(_:)), name: NSNotification.Name("RemoteCommandReceived"), object: nil)
     }
-    
-    func refreshRunningApps() {
-        let running = NSWorkspace.shared.runningApplications
-            .filter { $0.activationPolicy == .regular }
-            .compactMap { app -> LockedAppInfo? in
-                guard let bundleID = app.bundleIdentifier,
-                      bundleID != Bundle.main.bundleIdentifier else { return nil }
-                return LockedAppInfo(
-                    bundleID: bundleID,
-                    displayName: app.localizedName ?? bundleID,
-                    path: app.bundleURL?.path,
-                    dateAdded: Date()
-                )
-            }
-        self.runningApps = running.sorted { $0.displayName.lowercased() < $1.displayName.lowercased() }
-    }
-    
-    func addAppFromFilePicker() {
-        let panel = NSOpenPanel()
-        panel.title = "Select Application to Lock"
-        panel.allowedContentTypes = [.application]
-        panel.allowsMultipleSelection = true
-        panel.directoryURL = URL(fileURLWithPath: "/Applications")
-        
-        panel.begin { [weak self] response in
-            guard response == .OK else { return }
-            for url in panel.urls {
-                if let bundle = Bundle(url: url),
-                   let bundleID = bundle.bundleIdentifier {
-                    let name = bundle.infoDictionary?["CFBundleDisplayName"] as? String
-                        ?? bundle.infoDictionary?["CFBundleName"] as? String
-                        ?? url.deletingPathExtension().lastPathComponent
-                    let info = LockedAppInfo(
-                        bundleID: bundleID,
-                        displayName: name,
-                        path: url.path,
-                        dateAdded: Date()
-                    )
-                    self?.addLockedApp(info: info)
-                }
-            }
-        }
-    }
-    
-    // MARK: - BLOCKING ENGINE
     
     func startMonitoring() {
         guard !isMonitoring else { return }
         isMonitoring = true
+        addLog("Monitoring started")
         UserDefaults.standard.set(true, forKey: "com.applocker.monitoringEnabled")
         
-        addLog("MONITORING STARTED - Watching \(lockedApps.count) apps")
-        
-        // Use Timer instead of DispatchSource for simplicity
-        pollTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) { [weak self] _ in
-            self?.checkAndBlockFrontmostApp()
+        monitoringTask = Task {
+            while !Task.isCancelled {
+                await checkRunningApps()
+                try? await Task.sleep(nanoseconds: 200 * 1_000_000) // 200ms
+            }
         }
-        
-        let nc = NSWorkspace.shared.notificationCenter
-        let activateObs = nc.addObserver(forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { [weak self] note in
-            self?.handleAppActivated(note)
-        }
-        let launchObs = nc.addObserver(forName: NSWorkspace.didLaunchApplicationNotification, object: nil, queue: .main) { [weak self] note in
-            self?.handleAppLaunched(note)
-        }
-        workspaceObservers = [activateObs, launchObs]
-        
-        // Immediate check
-        checkAndBlockFrontmostApp()
     }
     
     func stopMonitoring() {
         isMonitoring = false
+        monitoringTask?.cancel()
+        monitoringTask = nil
+        addLog("Monitoring stopped")
         UserDefaults.standard.set(false, forKey: "com.applocker.monitoringEnabled")
-        
-        pollTimer?.invalidate()
-        pollTimer = nil
-        
-        for obs in workspaceObservers {
-            NSWorkspace.shared.notificationCenter.removeObserver(obs)
-        }
-        workspaceObservers.removeAll()
-        
-        dismissBlockingOverlay()
-        addLog("MONITORING STOPPED")
     }
     
-    private var lastDebugLog: Date = .distantPast
-    
-    private func checkAndBlockFrontmostApp() {
-        guard isMonitoring else { return }
-        guard !lockedApps.isEmpty else { return }
+    private func checkRunningApps() {
+        let runningApps = NSWorkspace.shared.runningApplications
         
-        guard let frontApp = NSWorkspace.shared.frontmostApplication,
-              let bundleID = frontApp.bundleIdentifier else { return }
-        
-        // Debug log every 2 seconds
-        let now = Date()
-        if now.timeIntervalSince(lastDebugLog) > 2.0 {
-            addLog("DEBUG: Frontmost=\(frontApp.localizedName ?? "?") (\(bundleID)), Locked=\(lockedApps.count), Temp=\(temporarilyUnlockedApps.count)")
-            lastDebugLog = now
-        }
-        
-        // Note: We check ourselves too, but won't block ourselves
-        
-        // Check if temporarily unlocked
-        if temporarilyUnlockedApps.contains(bundleID) { return }
-        
-        // Check if locked
-        guard let lockedApp = lockedApps.first(where: { $0.bundleID == bundleID }) else { return }
-        
-        // Check schedule
-        if let schedule = lockedApp.schedule, schedule.enabled && !schedule.isActiveNow() { return }
-        
-        // Throttle: don't block same app within 1.5 seconds
-        if lastBlockedApp == bundleID && now.timeIntervalSince(lastBlockTime) < 1.5 {
-            frontApp.hide()
-            return
-        }
-        
-        // Block it
-        let appName = frontApp.localizedName ?? bundleID
-        performBlock(app: frontApp, name: appName, bundleID: bundleID)
-    }
-    
-    private func handleAppActivated(_ note: Notification) {
-        guard isMonitoring else { return }
-        guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
-              let bundleID = app.bundleIdentifier else { return }
-        
-        if shouldBlock(bundleID: bundleID) {
-            let now = Date()
-            if lastBlockedApp == bundleID && now.timeIntervalSince(lastBlockTime) < 1.5 {
-                app.hide()
-                return
-            }
-            let appName = app.localizedName ?? bundleID
-            performBlock(app: app, name: appName, bundleID: bundleID)
-        }
-    }
-    
-    private func handleAppLaunched(_ note: Notification) {
-        guard isMonitoring else { return }
-        guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
-              let bundleID = app.bundleIdentifier else { return }
-        
-        if shouldBlock(bundleID: bundleID) {
-            let appName = app.localizedName ?? bundleID
-            addLog("APP LAUNCHED: Blocking \(appName)")
+        for app in runningApps {
+            guard let bundleID = app.bundleIdentifier else { continue }
             
-            // Hide immediately
-            app.hide()
+            // Skip if AppLocker itself
+            if bundleID == Bundle.main.bundleIdentifier { continue }
             
-            // Terminate after delay
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                app.forceTerminate()
-            }
-            
-            // Record and notify
-            recordUsage(bundleID: bundleID, appName: appName, event: .blocked)
-            NotificationManager.shared.sendBlockedAppNotification(appName: appName, bundleID: bundleID)
-            
-            // Update state
-            lastBlockedApp = bundleID
-            lastBlockTime = Date()
-            lastBlockedAppName = appName
-            lastBlockedBundleID = bundleID
-            
-            // Show overlay and dialog
-            showBlockingOverlay(appName: appName)
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-                guard let self = self else { return }
-                NSApp.activate(ignoringOtherApps: true)
-                self.showUnlockDialog = true
+            // Check if app is locked
+            if let lockedApp = lockedApps.first(where: { $0.bundleID == bundleID }) {
+                // Check if temporarily unlocked
+                if temporarilyUnlockedApps.contains(bundleID) { continue }
+
+                // Check schedule if active
+                if let schedule = lockedApp.schedule, schedule.enabled {
+                    if !schedule.isActiveNow() { continue }
+                }
+
+                // BLOCK THE APP
+                terminateApp(app)
+
+                // Only log and notify if not recently logged (debounce)
+                if lastBlockedBundleID != bundleID {
+                    let appName = app.localizedName ?? lockedApp.displayName
+                    addLog("Blocked access to \(appName) (\(bundleID))")
+                    recordUsage(bundleID: bundleID, appName: appName, event: .blocked)
+
+                    // Show notification
+                    NotificationManager.shared.sendBlockedAppNotification(appName: appName, bundleID: bundleID)
+
+                    // Trigger UI for unlock
+                    self.lastBlockedBundleID = bundleID
+                    self.lastBlockedAppName = appName
+
+                    // Bring AppLocker to front
+                    NSApp.activate(ignoringOtherApps: true)
+                    self.showUnlockDialog = true
+                }
             }
         }
-        
-        refreshRunningApps()
     }
     
-    private func shouldBlock(bundleID: String) -> Bool {
-        guard lockedApps.contains(where: { $0.bundleID == bundleID }) else { return false }
-        if temporarilyUnlockedApps.contains(bundleID) { return false }
-        if bundleID == Bundle.main.bundleIdentifier { return false }
-        if bundleID.hasPrefix("com.apple.") { return false }
-        
-        if let lockedApp = lockedApps.first(where: { $0.bundleID == bundleID }),
-           let schedule = lockedApp.schedule, schedule.enabled && !schedule.isActiveNow() {
-            return false
-        }
-        return true
+    private func terminateApp(_ app: NSRunningApplication) {
+        app.forceTerminate()
     }
     
-    private func performBlock(app: NSRunningApplication, name: String, bundleID: String) {
-        guard !isCurrentlyBlocking else { return }
-        isCurrentlyBlocking = true
-        
-        addLog("BLOCKING: \(name) (\(bundleID))")
-        
-        // Hide and terminate
-        app.hide()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            app.forceTerminate()
-        }
-        
-        // Record
-        recordUsage(bundleID: bundleID, appName: name, event: .blocked)
-        NotificationManager.shared.sendBlockedAppNotification(appName: name, bundleID: bundleID)
-        
-        // Update state
-        lastBlockedApp = bundleID
-        lastBlockTime = Date()
-        lastBlockedAppName = name
-        lastBlockedBundleID = bundleID
-        
-        // Show overlay
-        showBlockingOverlay(appName: name)
-        
-        // Bring AppLocker to front and show unlock dialog
-        NSApp.activate(ignoringOtherApps: true)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-            guard let self = self else { return }
-            self.showUnlockDialog = true
-            self.isCurrentlyBlocking = false
-        }
-    }
-    
-    // MARK: - Blocking Overlay
-    
-    private func showBlockingOverlay(appName: String) {
-        dismissBlockingOverlay()
-        
-        guard let screen = NSScreen.main else { return }
-        
-        let window = NSWindow(
-            contentRect: screen.frame,
-            styleMask: [.borderless],
-            backing: .buffered,
-            defer: false
-        )
-        window.level = .statusBar
-        window.isOpaque = false
-        window.backgroundColor = NSColor.black.withAlphaComponent(0.85)
-        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        window.ignoresMouseEvents = false
-        
-        let overlay = BlockingOverlayView(appName: appName)
-        window.contentView = NSHostingView(rootView: overlay)
-        window.makeKeyAndOrderFront(nil)
-        
-        blockingWindow = window
-        
-        // Auto dismiss
-        DispatchQueue.main.asyncAfter(deadline: .now() + blockingOverlayDuration) { [weak self] in
-            self?.dismissBlockingOverlay()
-        }
-    }
-    
-    func dismissBlockingOverlay() {
-        blockingWindow?.orderOut(nil)
-        blockingWindow = nil
-    }
-    
-    // MARK: - Temporary Unlock
-    
-    func temporarilyUnlock(bundleID: String, duration: TimeInterval? = nil) {
-        let actualDuration = duration ?? unlockDuration
+    func temporarilyUnlock(bundleID: String) {
         temporarilyUnlockedApps.insert(bundleID)
-        dismissBlockingOverlay()
+        addLog("Temporarily unlocked \(bundleID) for \(Int(unlockDuration/60)) minutes")
+        recordUsage(bundleID: bundleID, appName: bundleID, event: .unlocked)
+
+        // Schedule re-lock
+        Task {
+            try? await Task.sleep(nanoseconds: UInt64(unlockDuration * 1_000_000_000))
+            await MainActor.run {
+                if self.temporarilyUnlockedApps.contains(bundleID) {
+                    self.temporarilyUnlockedApps.remove(bundleID)
+                    self.addLog("Re-locked \(bundleID) after timeout")
+                }
+            }
+        }
         
-        addLog("UNLOCKED: \(bundleID) for \(Int(actualDuration))s")
-        recordUsage(bundleID: bundleID, appName: lastBlockedAppName ?? bundleID, event: .unlocked)
-        
-        if let appName = lastBlockedAppName {
+        // Notify
+        if let appName = lockedApps.first(where: { $0.bundleID == bundleID })?.displayName {
             NotificationManager.shared.sendUnlockedAppNotification(appName: appName, bundleID: bundleID)
         }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + actualDuration) { [weak self] in
-            self?.temporarilyUnlockedApps.remove(bundleID)
-            self?.addLog("RE-LOCKED: \(bundleID)")
-        }
+        showUnlockDialog = false
+        lastBlockedBundleID = ""
+        lastBlockedAppName = nil
     }
     
-    var unlockDurationFormatted: String {
-        let mins = Int(unlockDuration) / 60
-        let secs = Int(unlockDuration) % 60
-        if mins > 0 && secs > 0 { return "\(mins)m \(secs)s" }
-        else if mins > 0 { return "\(mins) min" }
-        else { return "\(secs)s" }
-    }
-    
-    // MARK: - Locked Apps Management
-    
-    func addLockedApp(info: LockedAppInfo) {
-        if !lockedApps.contains(where: { $0.bundleID == info.bundleID }) {
-            lockedApps.append(info)
-            saveLockedApps()
-            addLog("ADDED: \(info.displayName) to locked list")
-        }
-    }
+    // MARK: - Management
     
     func addLockedApp(bundleID: String) {
         if !lockedApps.contains(where: { $0.bundleID == bundleID }) {
-            var name = bundleID
+            // Get app name and icon if possible
+            var displayName = bundleID
             var path: String? = nil
-            if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID),
-               let bundle = Bundle(url: url) {
-                name = bundle.infoDictionary?["CFBundleDisplayName"] as? String
-                    ?? bundle.infoDictionary?["CFBundleName"] as? String
-                    ?? bundleID
+
+            if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
                 path = url.path
+                displayName = FileManager.default.displayName(atPath: url.path)
             }
-            let info = LockedAppInfo(bundleID: bundleID, displayName: name, path: path, dateAdded: Date())
+
+            let info = LockedAppInfo(bundleID: bundleID, displayName: displayName, path: path, dateAdded: Date(), category: nil, schedule: nil)
             lockedApps.append(info)
             saveLockedApps()
-            addLog("ADDED: \(name) to locked list")
+            addLog("Locked new app: \(displayName)")
         }
     }
     
     func removeLockedApp(bundleID: String) {
         lockedApps.removeAll { $0.bundleID == bundleID }
-        temporarilyUnlockedApps.remove(bundleID)
         saveLockedApps()
-        addLog("REMOVED: \(bundleID) from locked list")
-    }
-    
-    func isAppLocked(bundleID: String) -> Bool {
-        return lockedApps.contains { $0.bundleID == bundleID }
-    }
-    
-    func updateAppSchedule(bundleID: String, schedule: LockSchedule?) {
-        if let index = lockedApps.firstIndex(where: { $0.bundleID == bundleID }) {
-            let app = lockedApps[index]
-            lockedApps[index] = LockedAppInfo(
-                bundleID: app.bundleID, displayName: app.displayName,
-                path: app.path, dateAdded: app.dateAdded,
-                category: app.category, schedule: schedule
-            )
-            saveLockedApps()
-        }
+        addLog("Removed lock for: \(bundleID)")
     }
     
     func updateAppCategory(bundleID: String, category: String?) {
         if let index = lockedApps.firstIndex(where: { $0.bundleID == bundleID }) {
-            let app = lockedApps[index]
-            lockedApps[index] = LockedAppInfo(
-                bundleID: app.bundleID, displayName: app.displayName,
-                path: app.path, dateAdded: app.dateAdded,
-                category: category, schedule: app.schedule
-            )
+            var app = lockedApps[index]
+            app.category = category
+            lockedApps[index] = app
+            saveLockedApps()
+        }
+    }
+    
+    func updateAppSchedule(bundleID: String, schedule: LockSchedule?) {
+        if let index = lockedApps.firstIndex(where: { $0.bundleID == bundleID }) {
+            var app = lockedApps[index]
+            app.schedule = schedule
+            lockedApps[index] = app
             saveLockedApps()
         }
     }
@@ -699,20 +303,6 @@ class AppMonitor: ObservableObject {
     
     // MARK: - Export / Import
     
-    struct AppLockerExport: Codable {
-        let version: String
-        let exportDate: Date
-        let lockedApps: [LockedAppInfo]
-        let categories: [AppCategory]
-        let settings: ExportedSettings
-    }
-    
-    struct ExportedSettings: Codable {
-        let unlockDuration: TimeInterval
-        let autoLockOnSleep: Bool
-        let blockingOverlayDuration: TimeInterval
-    }
-    
     func exportConfiguration() -> Data? {
         let export = AppLockerExport(
             version: "3.0", exportDate: Date(), lockedApps: lockedApps, categories: categories,
@@ -807,16 +397,13 @@ class AppMonitor: ObservableObject {
     func addLog(_ message: String) {
         let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium)
         let entry = "[\(timestamp)] \(message)"
-        let doLog = { [weak self] in
-            guard let self = self else { return }
-            self.blockLog.insert(entry, at: 0)
-            if self.blockLog.count > 500 {
-                self.blockLog = Array(self.blockLog.prefix(500))
-            }
-            self.saveBlockLog()
+
+        self.blockLog.insert(entry, at: 0)
+        if self.blockLog.count > 500 {
+            self.blockLog = Array(self.blockLog.prefix(500))
         }
-        if Thread.isMainThread { doLog() }
-        else { DispatchQueue.main.async(execute: doLog) }
+        self.saveBlockLog()
+
         print("AppLocker: \(entry)")
     }
     
@@ -834,47 +421,56 @@ class AppMonitor: ObservableObject {
     private func saveBlockLog() {
         UserDefaults.standard.set(blockLog, forKey: logKey)
     }
-}
 
-// MARK: - Blocking Overlay View
-
-struct BlockingOverlayView: View {
-    let appName: String
-    @State private var pulseAnimation = false
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            Spacer()
-            
-            ZStack {
-                Circle()
-                    .fill(Color.red.opacity(0.2))
-                    .frame(width: 160, height: 160)
-                    .scaleEffect(pulseAnimation ? 1.2 : 1.0)
-                    .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: pulseAnimation)
-                
-                Image(systemName: "lock.shield.fill")
-                    .font(.system(size: 80))
-                    .foregroundColor(.red)
-            }
-            
-            Text("ACCESS BLOCKED")
-                .font(.system(size: 36, weight: .heavy))
-                .foregroundColor(.white)
-            
-            Text("\"\(appName)\" has been terminated.")
-                .font(.title2)
-                .foregroundColor(.white.opacity(0.8))
-            
-            Text("This app is locked by AppLocker.\nUnlock it from the AppLocker window.")
-                .multilineTextAlignment(.center)
-                .foregroundColor(.white.opacity(0.6))
-            
-            Spacer()
+    private func loadSettings() {
+        if UserDefaults.standard.object(forKey: settingsUnlockDurationKey) != nil {
+            unlockDuration = UserDefaults.standard.double(forKey: settingsUnlockDurationKey)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .onAppear {
-            pulseAnimation = true
+        if UserDefaults.standard.object(forKey: settingsAutoLockKey) != nil {
+            autoLockOnSleep = UserDefaults.standard.bool(forKey: settingsAutoLockKey)
+        }
+        if UserDefaults.standard.object(forKey: settingsOverlayDurationKey) != nil {
+            blockingOverlayDuration = UserDefaults.standard.double(forKey: settingsOverlayDurationKey)
         }
     }
+
+    func saveSettings() {
+        UserDefaults.standard.set(unlockDuration, forKey: settingsUnlockDurationKey)
+        UserDefaults.standard.set(autoLockOnSleep, forKey: settingsAutoLockKey)
+        UserDefaults.standard.set(blockingOverlayDuration, forKey: settingsOverlayDurationKey)
+    }
+
+    @objc func handleRemoteCommand(_ notification: Notification) {
+        guard let command = notification.object as? RemoteCommand else { return }
+
+        Task { @MainActor in
+            switch command.action {
+            case .lockAll:
+                self.lockMacScreen()
+            case .unlockAll:
+                // Temporarily unlock all locked apps
+                for app in self.lockedApps {
+                    self.temporarilyUnlock(bundleID: app.bundleID)
+                }
+                self.addLog("Remote Command: Unlock All executed")
+            case .unlockApp:
+                if let bundleID = command.bundleID {
+                    self.temporarilyUnlock(bundleID: bundleID)
+                    self.addLog("Remote Command: Unlock \(bundleID) executed")
+                }
+            }
+        }
+    }
+
+    private func lockMacScreen() {
+        let source = """
+        tell application "System Events" to sleep
+        """
+        if let script = NSAppleScript(source: source) {
+            var error: NSDictionary?
+            script.executeAndReturnError(&error)
+        }
+        self.addLog("Remote Command: Lock Screen executed")
+    }
 }
+#endif

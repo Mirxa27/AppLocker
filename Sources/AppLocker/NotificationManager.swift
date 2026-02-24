@@ -3,7 +3,9 @@
 
 import Foundation
 import UserNotifications
+#if os(macOS)
 import AppKit
+#endif
 
 class NotificationManager: ObservableObject {
     static let shared = NotificationManager()
@@ -16,10 +18,25 @@ class NotificationManager: ObservableObject {
     private let notificationsEnabledKey = "com.applocker.notificationsEnabled"
     private let crossDeviceEnabledKey = "com.applocker.crossDeviceEnabled"
     
+    // Delegate handling via composition to avoid compiler crashes with NSObject + ObservableObject
+    private var notificationDelegate: NotificationDelegate?
+
     private init() {
         loadSettings()
         loadHistory()
-        requestNotificationPermissions()
+
+        // Listen for iCloud KV changes
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(iCloudKVChanged),
+            name: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
+            object: NSUbiquitousKeyValueStore.default
+        )
+        NSUbiquitousKeyValueStore.default.synchronize()
+
+        // Set up delegate
+        self.notificationDelegate = NotificationDelegate()
+        UNUserNotificationCenter.current().delegate = self.notificationDelegate
     }
     
     // MARK: - Permissions
@@ -148,16 +165,17 @@ class NotificationManager: ObservableObject {
         
         // Use NSUbiquitousKeyValueStore (iCloud Key-Value) to sync alerts across devices
         let store = NSUbiquitousKeyValueStore.default
+        let deviceName = ProcessInfo.processInfo.hostName
         
         let alert: [String: Any] = [
             "appName": appName,
             "bundleID": bundleID,
             "timestamp": Date().timeIntervalSince1970,
-            "deviceName": Host.current().localizedName ?? "Mac",
+            "deviceName": deviceName,
             "type": isFailed ? "failed_attempt" : "blocked",
             "message": isFailed
-                ? "ALERT: Failed unlock attempt on \(appName) from \(Host.current().localizedName ?? "Mac")"
-                : "Access to \(appName) was blocked on \(Host.current().localizedName ?? "Mac")"
+                ? "ALERT: Failed unlock attempt on \(appName) from \(deviceName)"
+                : "Access to \(appName) was blocked on \(deviceName)"
         ]
         
         // Store latest alert in iCloud KV store - syncs to all devices with same Apple ID
@@ -167,6 +185,7 @@ class NotificationManager: ObservableObject {
             store.synchronize()
         }
         
+        #if os(macOS)
         // Also use distributed notifications for same-machine processes
         DistributedNotificationCenter.default().postNotificationName(
             NSNotification.Name("com.applocker.appBlocked"),
@@ -179,10 +198,12 @@ class NotificationManager: ObservableObject {
         if isFailed {
             sendUrgentAlertViaAppleScript(appName: appName)
         }
+        #endif
     }
     
+    #if os(macOS)
     private func sendUrgentAlertViaAppleScript(appName: String) {
-        let deviceName = Host.current().localizedName ?? "Mac"
+        let deviceName = ProcessInfo.processInfo.hostName
         let script = """
         display notification "SECURITY ALERT: Failed unlock attempt on \(appName) from \(deviceName)" with title "AppLocker Security Alert" sound name "Sosumi"
         """
@@ -190,6 +211,63 @@ class NotificationManager: ObservableObject {
         if let appleScript = NSAppleScript(source: script) {
             var error: NSDictionary?
             appleScript.executeAndReturnError(&error)
+        }
+    }
+    #endif
+
+    // MARK: - Remote Commands
+
+    func sendRemoteCommand(_ action: RemoteCommand.Action, bundleID: String? = nil) {
+        let command = RemoteCommand(
+            id: UUID(),
+            action: action,
+            bundleID: bundleID,
+            sourceDevice: ProcessInfo.processInfo.hostName,
+            timestamp: Date()
+        )
+
+        if let data = try? JSONEncoder().encode(command) {
+            NSUbiquitousKeyValueStore.default.set(data, forKey: "com.applocker.latestCommand")
+            NSUbiquitousKeyValueStore.default.synchronize()
+        }
+    }
+
+    @objc func iCloudKVChanged(_ notification: Notification) {
+        let store = NSUbiquitousKeyValueStore.default
+        let thisDevice = ProcessInfo.processInfo.hostName
+
+        // Check for Alerts
+        if let data = store.data(forKey: "com.applocker.latestAlert"),
+           let alert = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let timestamp = alert["timestamp"] as? TimeInterval,
+           let deviceName = alert["deviceName"] as? String,
+           let message = alert["message"] as? String,
+           deviceName != thisDevice,
+           Date().timeIntervalSince1970 - timestamp < 60 {
+
+            // Show alert
+            let content = UNMutableNotificationContent()
+            content.title = "AppLocker Alert from \(deviceName)"
+            content.body = message
+            content.sound = .defaultCritical
+
+            let request = UNNotificationRequest(
+                identifier: "cross-device-\(timestamp)",
+                content: content,
+                trigger: nil
+            )
+            UNUserNotificationCenter.current().add(request)
+        }
+
+        // Check for Commands
+        if let data = store.data(forKey: "com.applocker.latestCommand"),
+           let command = try? JSONDecoder().decode(RemoteCommand.self, from: data),
+           command.sourceDevice != thisDevice,
+           Date().timeIntervalSince(command.timestamp) < 60 {
+
+             DispatchQueue.main.async {
+                 NotificationCenter.default.post(name: NSNotification.Name("RemoteCommandReceived"), object: command)
+             }
         }
     }
     
@@ -238,50 +316,18 @@ class NotificationManager: ObservableObject {
     }
 }
 
-// MARK: - Notification Record Model
-
-struct NotificationRecord: Codable, Identifiable {
-    let id: UUID
-    let appName: String
-    let bundleID: String
-    let timestamp: Date
-    let type: NotificationType
-    
-    init(appName: String, bundleID: String, timestamp: Date, type: NotificationType) {
-        self.id = UUID()
-        self.appName = appName
-        self.bundleID = bundleID
-        self.timestamp = timestamp
-        self.type = type
+// MARK: - Notification Delegate Class
+private class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                               willPresent notification: UNNotification,
+                               withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner, .sound, .badge])
     }
-    
-    enum NotificationType: String, Codable {
-        case blocked
-        case unlocked
-        case failedAttempt
-        
-        var displayName: String {
-            switch self {
-            case .blocked: return "Blocked"
-            case .unlocked: return "Unlocked"
-            case .failedAttempt: return "Failed Attempt"
-            }
-        }
-        
-        var icon: String {
-            switch self {
-            case .blocked: return "hand.raised.fill"
-            case .unlocked: return "lock.open.fill"
-            case .failedAttempt: return "exclamationmark.triangle.fill"
-            }
-        }
-        
-        var color: String {
-            switch self {
-            case .blocked: return "orange"
-            case .unlocked: return "green"
-            case .failedAttempt: return "red"
-            }
-        }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                               didReceive response: UNNotificationResponse,
+                               withCompletionHandler completionHandler: @escaping () -> Void) {
+        // Handle actions
+        completionHandler()
     }
 }

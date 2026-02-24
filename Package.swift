@@ -4,7 +4,8 @@ import PackageDescription
 let package = Package(
     name: "AppLocker",
     platforms: [
-        .macOS(.v13)
+        .macOS(.v13),
+        .iOS(.v16)
     ],
     products: [
         .executable(
@@ -16,7 +17,12 @@ let package = Package(
         .executableTarget(
             name: "AppLocker",
             dependencies: [],
-            swiftSettings: []
+            path: "Sources/AppLocker",
+            exclude: [],
+            resources: [],
+            swiftSettings: [
+                .define("SWIFT_PACKAGE")
+            ]
         )
     ]
 )
