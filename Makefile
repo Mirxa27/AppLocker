@@ -30,15 +30,14 @@ install: release
 	@cp -R release/AppLocker.app /Applications/
 	@echo "✅ Installed to /Applications/AppLocker.app"
 
-# Create a new version tag and release
-# Usage: make version VERSION=3.1
-version:
+# Print instructions for tagging a new release
+# Usage: make tag-release VERSION=3.1
+tag-release:
 	@if [ -z "$(VERSION)" ]; then \
-		echo "Usage: make version VERSION=3.1"; \
+		echo "Usage: make tag-release VERSION=3.1"; \
 		exit 1; \
 	fi
-	@echo "Creating version $(VERSION)..."
-	@echo "Next steps:"
+	@echo "Steps to release v$(VERSION):"
 	@echo "  1. Commit changes: git add -A && git commit -m 'Release v$(VERSION)'"
 	@echo "  2. Create tag: git tag -a v$(VERSION) -m 'Release v$(VERSION)'"
 	@echo "  3. Push: git push origin main && git push origin v$(VERSION)"
@@ -58,6 +57,6 @@ help:
 	@echo "  make clean      - Clean build artifacts"
 	@echo "  make test       - Run tests"
 	@echo "  make install    - Install to /Applications"
-	@echo "  make version    - Create new version (e.g., make version VERSION=3.1)"
+	@echo "  make tag-release - Print release tagging instructions (e.g., make tag-release VERSION=3.1)"
 	@echo "  make run        - Build and run for development"
 	@echo "  make help       - Show this help"

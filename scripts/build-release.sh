@@ -20,8 +20,32 @@ BUILD_DIR="$PROJECT_DIR/.build"
 RELEASE_DIR="$PROJECT_DIR/release"
 APP_BUNDLE="$PROJECT_DIR/AppLocker.app"
 
-# Read version from existing Info.plist or default
-VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$APP_BUNDLE/Contents/Info.plist" 2>/dev/null || echo "3.0")
+# Determine version:
+# 1) Use VERSION env var if set
+# 2) Else read from existing Info.plist
+# 3) Else derive from latest git tag (optionally prefixed with 'v')
+# 4) Fail if still unknown
+if [ -z "$VERSION" ]; then
+    if [ -f "$APP_BUNDLE/Contents/Info.plist" ]; then
+        VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$APP_BUNDLE/Contents/Info.plist" 2>/dev/null || true)
+    fi
+fi
+
+if [ -z "$VERSION" ]; then
+    GIT_TAG=$(git -C "$PROJECT_DIR" describe --tags --abbrev=0 2>/dev/null || true)
+    if [ -n "$GIT_TAG" ]; then
+        # Strip leading 'v' if present (e.g. v1.2.3 -> 1.2.3)
+        VERSION="${GIT_TAG#v}"
+    fi
+fi
+
+if [ -z "$VERSION" ]; then
+    echo -e "${RED}❌ Unable to determine app version.${NC}"
+    echo -e "${RED}   Set the VERSION environment variable,${NC}"
+    echo -e "${RED}   or ensure Info.plist exists,${NC}"
+    echo -e "${RED}   or create an annotated git tag (e.g. v1.2.3).${NC}"
+    exit 1
+fi
 
 echo -e "${GREEN}🚀 Building $APP_NAME v$VERSION${NC}"
 echo ""
@@ -81,6 +105,10 @@ if [ ! -f "$APP_BUNDLE/Contents/Info.plist" ]; then
     <true/>
     <key>NSSupportsAutomaticGraphicsSwitching</key>
     <true/>
+    <key>NSCameraUsageDescription</key>
+    <string>AppLocker uses the camera to capture photos of unauthorized access attempts.</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>AppLocker uses Apple Events to automate system actions like locking the screen.</string>
 </dict>
 </plist>
 PLIST

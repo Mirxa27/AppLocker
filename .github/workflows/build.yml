@@ -31,7 +31,12 @@ jobs:
         run: swift build -v
 
       - name: Run tests
-        run: swift test -v 2>&1 || echo "No tests configured yet"
+        run: |
+          if [ -d Tests ]; then
+            swift test -v
+          else
+            echo "No tests configured yet"
+          fi
 
       - name: Build Release
         run: swift build -c release -v
@@ -93,6 +98,10 @@ jobs:
               <true/>
               <key>NSSupportsAutomaticGraphicsSwitching</key>
               <true/>
+              <key>NSCameraUsageDescription</key>
+              <string>AppLocker uses the camera to capture photos of unauthorized access attempts.</string>
+              <key>NSAppleEventsUsageDescription</key>
+              <string>AppLocker uses Apple Events to automate system actions like locking the screen.</string>
           </dict>
           </plist>
           PLIST

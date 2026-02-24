@@ -12,8 +12,8 @@ make release
 # Install to /Applications
 make install
 
-# Create new version
-make version VERSION=3.1
+# Print release tagging instructions
+make tag-release VERSION=3.1
 ```
 
 ## 📦 Creating a Release
