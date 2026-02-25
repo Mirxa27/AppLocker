@@ -306,6 +306,7 @@ struct MainInterface: View {
                     SidebarButton(title: "Intruder Photos", icon: "person.crop.circle.badge.exclamationmark", isSelected: selectedTab == 5) { selectedTab = 5 }
                     SidebarButton(title: "Categories", icon: "folder.fill", isSelected: selectedTab == 6) { selectedTab = 6 }
                     SidebarButton(title: "Secure Vault", icon: "lock.doc.fill", isSelected: selectedTab == 7) { selectedTab = 7 }
+                    SidebarButton(title: "File Locker", icon: "doc.badge.lock", isSelected: selectedTab == 8) { selectedTab = 8 }
 
                     Spacer()
                 }
@@ -325,6 +326,7 @@ struct MainInterface: View {
                     case 5: IntruderPhotoView()
                     case 6: CategoryManagementView()
                     case 7: VaultView()
+                    case 8: FileLockerView()
                     default: Text("Select an option")
                     }
                 }
