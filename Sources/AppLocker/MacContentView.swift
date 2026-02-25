@@ -309,6 +309,7 @@ struct MainInterface: View {
                     SidebarButton(title: "File Locker", icon: "doc.badge.lock", isSelected: selectedTab == 8) { selectedTab = 8 }
                     SidebarButton(title: "Clipboard Guard", icon: "clipboard.fill", isSelected: selectedTab == 9) { selectedTab = 9 }
                     SidebarButton(title: "Screen Privacy", icon: "eye.slash.fill", isSelected: selectedTab == 10) { selectedTab = 10 }
+                    SidebarButton(title: "Network Monitor", icon: "network", isSelected: selectedTab == 11) { selectedTab = 11 }
 
                     Spacer()
                 }
@@ -331,6 +332,7 @@ struct MainInterface: View {
                     case 8: FileLockerView()
                     case 9: ClipboardGuardView()
                     case 10: ScreenPrivacyView()
+                    case 11: NetworkMonitorView()
                     default: Text("Select an option")
                     }
                 }
