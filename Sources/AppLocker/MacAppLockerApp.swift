@@ -9,7 +9,7 @@ import UserNotifications
 @main
 struct MacAppLockerApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    
+
     var body: some Scene {
         WindowGroup {
             MacContentView()
@@ -18,22 +18,31 @@ struct MacAppLockerApp: App {
         .windowStyle(.automatic)
         .commands {
             CommandGroup(replacing: .newItem) { }
+            // Keep Quit in the menu but route it through NSApp.terminate
+            // so applicationShouldTerminate intercepts it
+            CommandGroup(replacing: .appTermination) {
+                Button("Quit AppLocker") {
+                    NSApp.terminate(nil)
+                }
+                .keyboardShortcut("q", modifiers: .command)
+            }
         }
     }
 }
 
 @MainActor
-class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotificationCenterDelegate, NSMenuDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotificationCenterDelegate, NSMenuDelegate, NSWindowDelegate {
     var statusItem: NSStatusItem?
-    
+    private var isQuitAuthInProgress = false
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Set up notification delegate
         UNUserNotificationCenter.current().delegate = self
-        
+
         // Request permissions
         AppMonitor.shared.requestAccessibilityPermissions()
         NotificationManager.shared.requestNotificationPermissions()
-        
+
         // Set up menu bar icon
         setupMenuBar()
 
@@ -47,8 +56,87 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
             object: NSUbiquitousKeyValueStore.default
         )
         NSUbiquitousKeyValueStore.default.synchronize()
+
+        // Assign window delegate to intercept the close button
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(mainWindowBecameKey(_:)),
+            name: NSWindow.didBecomeKeyNotification,
+            object: nil
+        )
     }
-    
+
+    // MARK: - Quit Protection
+
+    /// Intercepts every quit path (Cmd+Q, dock menu, menu bar Quit).
+    /// Force Quit (Cmd+Option+Esc) is a system-level signal and cannot be blocked by design.
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        // If passcode isn't set yet (first-launch setup), allow quit freely
+        guard AuthenticationManager.shared.isPasscodeSet() else {
+            return .terminateNow
+        }
+        // Prevent stacking multiple auth dialogs
+        guard !isQuitAuthInProgress else {
+            return .terminateLater
+        }
+        isQuitAuthInProgress = true
+        showQuitAuthDialog()
+        return .terminateLater   // macOS waits for reply(toApplicationShouldTerminate:)
+    }
+
+    private func showQuitAuthDialog() {
+        let alert = NSAlert()
+        alert.messageText = "Authentication Required"
+        alert.informativeText = "Enter your AppLocker passcode to quit. Quitting stops all app monitoring."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Quit AppLocker")
+        alert.addButton(withTitle: "Cancel")
+
+        let field = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        field.placeholderString = "Passcode"
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+
+        let response = alert.runModal()
+        isQuitAuthInProgress = false
+
+        if response == .alertFirstButtonReturn {
+            if AuthenticationManager.shared.verifyPasscode(field.stringValue) {
+                NSApp.reply(toApplicationShouldTerminate: true)
+            } else {
+                AuthenticationManager.shared.recordFailedAttempt()
+                let err = NSAlert()
+                err.messageText = "Incorrect Passcode"
+                err.informativeText = "AppLocker will continue running."
+                err.alertStyle = .critical
+                err.addButton(withTitle: "OK")
+                err.runModal()
+                NSApp.reply(toApplicationShouldTerminate: false)
+            }
+        } else {
+            NSApp.reply(toApplicationShouldTerminate: false)
+        }
+    }
+
+    // MARK: - Window Close Protection
+
+    @objc private func mainWindowBecameKey(_ notification: Notification) {
+        // Attach self as delegate to every non-panel window (skips alerts/sheets)
+        if let window = notification.object as? NSWindow, !(window is NSPanel) {
+            window.delegate = self
+        }
+    }
+
+    /// Red X close button: hide the window instead of closing it.
+    /// App keeps running in the background so monitoring continues.
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        guard AuthenticationManager.shared.isPasscodeSet() else {
+            return true   // Setup not done yet — allow close
+        }
+        sender.orderOut(nil)   // Hide window; monitoring is unaffected
+        return false
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false // Keep running in background for monitoring
     }
