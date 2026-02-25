@@ -1,0 +1,237 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-and-release:
+    name: Build · Sign · Notarize · Release
+    runs-on: macos-15
+    permissions:
+      contents: write
+
+    steps:
+      # ── Checkout ────────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Version ─────────────────────────────────────────────────────────────
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+
+      # ── SPM cache ───────────────────────────────────────────────────────────
+      - name: Cache SPM
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: ${{ runner.os }}-spm-${{ hashFiles('Package.swift') }}
+          restore-keys: ${{ runner.os }}-spm-
+
+      # ── Build ────────────────────────────────────────────────────────────────
+      - name: Build release binary
+        run: swift build -c release
+
+      # ── Import certificate ───────────────────────────────────────────────────
+      - name: Import Developer ID certificate
+        env:
+          P12_B64: ${{ secrets.DEVELOPER_ID_P12 }}
+          P12_PASS: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
+        run: |
+          echo "$P12_B64" | base64 --decode > /tmp/devid.p12
+
+          # Create a temporary keychain so the cert doesn't persist
+          security create-keychain -p "ci-keychain" ci.keychain
+          security set-keychain-settings -lut 3600 ci.keychain
+          security unlock-keychain -p "ci-keychain" ci.keychain
+
+          # Import cert + key
+          security import /tmp/devid.p12 \
+            -k ci.keychain \
+            -P "$P12_PASS" \
+            -T /usr/bin/codesign \
+            -T /usr/bin/productbuild
+
+          # Allow codesign to access the key without prompting
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: \
+            -s -k "ci-keychain" ci.keychain
+
+          # Add to search list
+          security list-keychains -d user -s ci.keychain $(security list-keychains -d user | tr -d '"')
+
+          # Verify
+          security find-identity -v -p codesigning ci.keychain | grep "Developer ID Application"
+
+      # ── Assemble app bundle ──────────────────────────────────────────────────
+      - name: Assemble app bundle
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          APP="AppLocker.app"
+          mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+
+          cp .build/release/AppLocker "$APP/Contents/MacOS/AppLocker"
+          chmod +x "$APP/Contents/MacOS/AppLocker"
+
+          cat > "$APP/Contents/Info.plist" << PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleName</key>
+              <string>AppLocker</string>
+              <key>CFBundleDisplayName</key>
+              <string>AppLocker</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.applocker.AppLocker</string>
+              <key>CFBundleVersion</key>
+              <string>${VERSION}</string>
+              <key>CFBundleShortVersionString</key>
+              <string>${VERSION}</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleExecutable</key>
+              <string>AppLocker</string>
+              <key>CFBundleIconFile</key>
+              <string>AppIcon</string>
+              <key>LSMinimumSystemVersion</key>
+              <string>13.0</string>
+              <key>LSUIElement</key>
+              <true/>
+              <key>NSHighResolutionCapable</key>
+              <true/>
+              <key>NSSupportsAutomaticGraphicsSwitching</key>
+              <true/>
+              <key>NSCameraUsageDescription</key>
+              <string>AppLocker uses the camera to capture photos of unauthorized access attempts.</string>
+              <key>NSAppleEventsUsageDescription</key>
+              <string>AppLocker uses Apple Events to automate system actions like locking the screen.</string>
+          </dict>
+          </plist>
+          PLIST
+
+          # Copy icon
+          [ -f icon.png ] && cp icon.png "$APP/Contents/Resources/AppIcon.png" || true
+
+      # ── Code sign ────────────────────────────────────────────────────────────
+      - name: Sign app bundle
+        run: |
+          CERT=$(security find-identity -v -p codesigning ci.keychain \
+            | grep "Developer ID Application" | head -1 \
+            | sed 's/.*"\(.*\)"/\1/')
+
+          echo "Signing with: $CERT"
+
+          codesign --force --deep \
+            --sign "$CERT" \
+            --keychain ci.keychain \
+            --entitlements dist/entitlements.plist \
+            --options runtime \
+            --timestamp \
+            AppLocker.app
+
+          codesign --verify --deep --strict AppLocker.app
+          echo "Signature OK"
+
+      # ── Create DMG ───────────────────────────────────────────────────────────
+      - name: Create DMG
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          mkdir -p dist
+
+          TMP=$(mktemp -d)
+          cp -R AppLocker.app "$TMP/"
+          ln -s /Applications "$TMP/Applications"
+
+          DMG="dist/AppLocker-${VERSION}.dmg"
+          hdiutil create -volname "AppLocker ${VERSION}" \
+            -srcfolder "$TMP" -ov -format UDZO -fs HFS+ "$DMG"
+          rm -rf "$TMP"
+
+          # Sign the DMG
+          CERT=$(security find-identity -v -p codesigning ci.keychain \
+            | grep "Developer ID Application" | head -1 \
+            | sed 's/.*"\(.*\)"/\1/')
+          codesign --sign "$CERT" --keychain ci.keychain --timestamp "$DMG"
+
+          echo "DMG: $DMG ($(du -sh "$DMG" | cut -f1))"
+          echo "DMG_PATH=$DMG" >> "$GITHUB_ENV"
+          echo "DMG_NAME=AppLocker-${VERSION}.dmg" >> "$GITHUB_ENV"
+
+      # ── Notarize ─────────────────────────────────────────────────────────────
+      - name: Notarize DMG
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_ASC_PASSWORD: ${{ secrets.APPLE_ASC_PASSWORD }}
+        run: |
+          echo "Submitting $DMG_PATH for notarization..."
+          xcrun notarytool submit "$DMG_PATH" \
+            --apple-id "$APPLE_ID" \
+            --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_ASC_PASSWORD" \
+            --wait
+
+      # ── Staple ───────────────────────────────────────────────────────────────
+      - name: Staple notarization ticket
+        run: |
+          xcrun stapler staple "$DMG_PATH"
+          xcrun stapler validate "$DMG_PATH"
+          echo "Staple OK"
+
+      # ── Cleanup keychain ─────────────────────────────────────────────────────
+      - name: Remove CI keychain
+        if: always()
+        run: security delete-keychain ci.keychain 2>/dev/null || true
+
+      # ── Generate release notes ───────────────────────────────────────────────
+      - name: Generate release notes
+        id: notes
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          # Get commits since last tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$PREV_TAG" ]; then
+            CHANGES=$(git log --oneline "${PREV_TAG}..HEAD" | sed 's/^[a-f0-9]* /- /')
+          else
+            CHANGES=$(git log --oneline -20 | sed 's/^[a-f0-9]* /- /')
+          fi
+
+          # Write to file to handle multi-line safely
+          cat > /tmp/release_notes.md << NOTES
+          ## AppLocker v${VERSION}
+
+          ### Installation
+          1. Download **AppLocker-${VERSION}.dmg**
+          2. Open the DMG → drag **AppLocker** to **Applications**
+          3. Launch from Applications
+          4. Grant **Accessibility** permission when prompted
+
+          > This DMG is signed with a Developer ID certificate, notarized by Apple,
+          > and stapled — no Gatekeeper warnings on any Mac running macOS 13+.
+
+          ### Requirements
+          - macOS 13.0 or later
+          - Apple Silicon or Intel
+
+          ### Changes
+          ${CHANGES}
+          NOTES
+
+          echo "NOTES_FILE=/tmp/release_notes.md" >> "$GITHUB_ENV"
+
+      # ── Publish GitHub Release ───────────────────────────────────────────────
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          gh release create "v${VERSION}" "$DMG_PATH#${DMG_NAME}" \
+            --title "AppLocker v${VERSION}" \
+            --notes-file "$NOTES_FILE" \
+            --latest
