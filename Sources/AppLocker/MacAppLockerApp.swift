@@ -36,6 +36,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
     private var isQuitAuthInProgress = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        #if !DEBUG
+        applyAntiDebugger()
+        #endif
         // Hide from Dock — menu bar only
         NSApp.setActivationPolicy(.accessory)
 
@@ -48,6 +51,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
 
         // Set up menu bar icon
         setupMenuBar()
+        InactivityMonitor.shared.start()
 
         ScreenPrivacyManager.shared.applyWindowProtection()
 
@@ -68,6 +72,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
             object: nil
         )
     }
+
+    // MARK: - Anti-Debugger
+
+    #if !DEBUG
+    private func applyAntiDebugger() {
+        // PT_DENY_ATTACH (31): prevents a debugger from attaching after this point.
+        // Called via dlsym to avoid direct ptrace symbol reference.
+        typealias PtraceT = @convention(c) (Int32, Int32, UnsafeMutableRawPointer?, Int32) -> Int32
+        if let handle = dlopen(nil, RTLD_LAZY),
+           let sym = dlsym(handle, "ptrace") {
+            let ptrace = unsafeBitCast(sym, to: PtraceT.self)
+            _ = ptrace(31, 0, nil, 0)  // 31 == PT_DENY_ATTACH
+        }
+    }
+    #endif
 
     // MARK: - Quit Protection
 

@@ -65,6 +65,17 @@ class AppMonitor: ObservableObject {
             }
             .store(in: &cancellables)
 
+        NotificationCenter.default.publisher(for: NSWorkspace.didWakeNotification)
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    guard let self = self, self.autoLockOnSleep else { return }
+                    self.temporarilyUnlockedApps.removeAll()
+                    AuthenticationManager.shared.logout()
+                    self.addLog("Auto-locked: system woke from sleep")
+                }
+            }
+            .store(in: &cancellables)
+
         // Listen for remote commands
         NotificationCenter.default.addObserver(self, selector: #selector(handleRemoteCommand(_:)), name: NSNotification.Name("RemoteCommandReceived"), object: nil)
     }

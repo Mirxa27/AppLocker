@@ -991,6 +991,20 @@ struct SettingsView: View {
                 }
             }
 
+            Section("Inactivity Timeout") {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Auto-lock after \(Int(InactivityMonitor.shared.timeout / 60)) min of inactivity")
+                        .font(.caption).foregroundColor(.secondary)
+                    Slider(
+                        value: Binding(
+                            get: { InactivityMonitor.shared.timeout / 60 },
+                            set: { InactivityMonitor.shared.timeout = $0 * 60 }
+                        ),
+                        in: 1...60, step: 1
+                    )
+                }
+            }
+
             Section(header: Text("Notifications")) {
                 Toggle("Notifications Enabled", isOn: $notificationManager.notificationsEnabled)
                     .onChange(of: notificationManager.notificationsEnabled) { _ in notificationManager.saveSettings() }
