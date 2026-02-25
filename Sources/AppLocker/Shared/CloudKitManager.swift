@@ -6,7 +6,9 @@ import Foundation
 class CloudKitManager: ObservableObject {
     static let shared = CloudKitManager()
 
-    private let container = CKContainer(identifier: "iCloud.com.mirxa.AppLocker")
+    // Use the default container (derived from bundle ID: iCloud.com.applocker.AppLocker).
+    // Avoids a hard trap if a custom container identifier is not registered in the portal.
+    private lazy var container: CKContainer = CKContainer.default()
     private var db: CKDatabase { container.privateCloudDatabase }
 
     @Published var iCloudAvailable = false

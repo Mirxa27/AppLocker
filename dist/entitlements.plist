@@ -10,5 +10,11 @@
     <true/>
     <key>com.apple.security.personal-information.photos-library</key>
     <true/>
+    <key>com.apple.developer.icloud-services</key>
+    <array>
+        <string>CloudKit</string>
+    </array>
+    <key>com.apple.developer.ubiquity-kvstore-identifier</key>
+    <string>$(TeamIdentifierPrefix)com.applocker.AppLocker</string>
 </dict>
 </plist>
