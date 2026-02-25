@@ -307,6 +307,7 @@ struct MainInterface: View {
                     SidebarButton(title: "Categories", icon: "folder.fill", isSelected: selectedTab == 6) { selectedTab = 6 }
                     SidebarButton(title: "Secure Vault", icon: "lock.doc.fill", isSelected: selectedTab == 7) { selectedTab = 7 }
                     SidebarButton(title: "File Locker", icon: "doc.badge.lock", isSelected: selectedTab == 8) { selectedTab = 8 }
+                    SidebarButton(title: "Clipboard Guard", icon: "clipboard.fill", isSelected: selectedTab == 9) { selectedTab = 9 }
 
                     Spacer()
                 }
@@ -327,6 +328,7 @@ struct MainInterface: View {
                     case 6: CategoryManagementView()
                     case 7: VaultView()
                     case 8: FileLockerView()
+                    case 9: ClipboardGuardView()
                     default: Text("Select an option")
                     }
                 }
