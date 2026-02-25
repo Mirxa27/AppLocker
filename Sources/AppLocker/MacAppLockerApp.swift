@@ -36,6 +36,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
     private var isQuitAuthInProgress = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Hide from Dock — menu bar only
+        NSApp.setActivationPolicy(.accessory)
+
         // Set up notification delegate
         UNUserNotificationCenter.current().delegate = self
 

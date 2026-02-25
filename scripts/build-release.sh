@@ -100,7 +100,7 @@ if [ ! -f "$APP_BUNDLE/Contents/Info.plist" ]; then
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
     <key>LSUIElement</key>
-    <false/>
+    <true/>
     <key>NSHighResolutionCapable</key>
     <true/>
     <key>NSSupportsAutomaticGraphicsSwitching</key>
