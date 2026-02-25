@@ -298,19 +298,25 @@ struct MainInterface: View {
             HSplitView {
                 // Sidebar
                 VStack(alignment: .leading, spacing: 4) {
-                    SidebarButton(title: "Locked Apps", icon: "lock.app.dashed", isSelected: selectedTab == 0) { selectedTab = 0 }
-                    SidebarButton(title: "Add Apps", icon: "plus.app", isSelected: selectedTab == 1) { selectedTab = 1 }
-                    SidebarButton(title: "Stats", icon: "chart.bar", isSelected: selectedTab == 2) { selectedTab = 2 }
-                    SidebarButton(title: "Settings", icon: "gear", isSelected: selectedTab == 3) { selectedTab = 3 }
-                    SidebarButton(title: "Activity Log", icon: "list.bullet.rectangle", isSelected: selectedTab == 4) { selectedTab = 4 }
-                    SidebarButton(title: "Intruder Photos", icon: "person.crop.circle.badge.exclamationmark", isSelected: selectedTab == 5) { selectedTab = 5 }
-                    SidebarButton(title: "Categories", icon: "folder.fill", isSelected: selectedTab == 6) { selectedTab = 6 }
-                    SidebarButton(title: "Secure Vault", icon: "lock.doc.fill", isSelected: selectedTab == 7) { selectedTab = 7 }
-                    SidebarButton(title: "File Locker", icon: "doc.badge.lock", isSelected: selectedTab == 8) { selectedTab = 8 }
-                    SidebarButton(title: "Clipboard Guard", icon: "clipboard.fill", isSelected: selectedTab == 9) { selectedTab = 9 }
-                    SidebarButton(title: "Screen Privacy", icon: "eye.slash.fill", isSelected: selectedTab == 10) { selectedTab = 10 }
-                    SidebarButton(title: "Network Monitor", icon: "network", isSelected: selectedTab == 11) { selectedTab = 11 }
-                    SidebarButton(title: "Secure Notes", icon: "lock.rectangle.stack.fill", isSelected: selectedTab == 12) { selectedTab = 12 }
+                    SidebarButton(title: "Locked Apps",      icon: "lock.app.dashed",                  isSelected: selectedTab == 0)  { selectedTab = 0  }
+                    SidebarButton(title: "Add Apps",         icon: "plus.app",                         isSelected: selectedTab == 1)  { selectedTab = 1  }
+                    SidebarButton(title: "Stats",            icon: "chart.bar",                        isSelected: selectedTab == 2)  { selectedTab = 2  }
+                    SidebarButton(title: "Settings",         icon: "gear",                             isSelected: selectedTab == 3)  { selectedTab = 3  }
+                    SidebarButton(title: "Activity Log",     icon: "list.bullet.rectangle",            isSelected: selectedTab == 4)  { selectedTab = 4  }
+                    SidebarButton(title: "Intruder Photos",  icon: "person.crop.circle.badge.exclamationmark", isSelected: selectedTab == 5) { selectedTab = 5 }
+                    SidebarButton(title: "Categories",       icon: "folder.fill",                      isSelected: selectedTab == 6)  { selectedTab = 6  }
+
+                    Divider().padding(.vertical, 4)
+
+                    Text("Security Tools")
+                        .font(.caption2).foregroundColor(.secondary).padding(.horizontal, 8)
+
+                    SidebarButton(title: "Secure Vault",     icon: "lock.doc.fill",                   isSelected: selectedTab == 7)  { selectedTab = 7  }
+                    SidebarButton(title: "File Locker",      icon: "doc.badge.lock",                  isSelected: selectedTab == 8)  { selectedTab = 8  }
+                    SidebarButton(title: "Clipboard Guard",  icon: "clipboard.fill",                  isSelected: selectedTab == 9)  { selectedTab = 9  }
+                    SidebarButton(title: "Screen Privacy",   icon: "eye.slash.fill",                  isSelected: selectedTab == 10) { selectedTab = 10 }
+                    SidebarButton(title: "Network Monitor",  icon: "network",                         isSelected: selectedTab == 11) { selectedTab = 11 }
+                    SidebarButton(title: "Secure Notes",     icon: "lock.rectangle.stack.fill",       isSelected: selectedTab == 12) { selectedTab = 12 }
 
                     Spacer()
                 }
