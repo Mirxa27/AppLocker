@@ -18,9 +18,6 @@ class NotificationManager: ObservableObject {
     private let notificationsEnabledKey = "com.applocker.notificationsEnabled"
     private let crossDeviceEnabledKey = "com.applocker.crossDeviceEnabled"
     
-    // Delegate handling via composition to avoid compiler crashes with NSObject + ObservableObject
-    private var notificationDelegate: NotificationDelegate?
-
     private init() {
         loadSettings()
         loadHistory()
@@ -33,10 +30,6 @@ class NotificationManager: ObservableObject {
             object: NSUbiquitousKeyValueStore.default
         )
         NSUbiquitousKeyValueStore.default.synchronize()
-
-        // Set up delegate
-        self.notificationDelegate = NotificationDelegate()
-        UNUserNotificationCenter.current().delegate = self.notificationDelegate
     }
     
     // MARK: - Permissions
@@ -316,18 +309,3 @@ class NotificationManager: ObservableObject {
     }
 }
 
-// MARK: - Notification Delegate Class
-private class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
-    func userNotificationCenter(_ center: UNUserNotificationCenter,
-                               willPresent notification: UNNotification,
-                               withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        completionHandler([.banner, .sound, .badge])
-    }
-
-    func userNotificationCenter(_ center: UNUserNotificationCenter,
-                               didReceive response: UNNotificationResponse,
-                               withCompletionHandler completionHandler: @escaping () -> Void) {
-        // Handle actions
-        completionHandler()
-    }
-}

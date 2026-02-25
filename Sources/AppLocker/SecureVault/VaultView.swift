@@ -125,7 +125,9 @@ struct VaultView: View {
         for provider in providers {
             _ = provider.loadObject(ofClass: URL.self) { url, _ in
                 guard let url else { return }
-                DispatchQueue.main.async { vault.addFile(from: url) }
+                Task { @MainActor in
+                    vault.addFile(from: url)
+                }
             }
         }
         return true

@@ -15,6 +15,7 @@ class VaultManager: ObservableObject {
     private var sessionKey: SymmetricKey?
     private let keychainSaltKey = "com.applocker.vaultSalt"
     private let metaFilename = "vault_meta.json"
+    private var openedTempURLs: [URL] = []
 
     var vaultDirectory: URL {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -46,6 +47,11 @@ class VaultManager: ObservableObject {
     }
 
     func lock() {
+        // Securely delete all temp decrypted files before clearing the key
+        for url in openedTempURLs {
+            CryptoHelper.secureDelete(url: url)
+        }
+        openedTempURLs = []
         sessionKey = nil
         isUnlocked = false
         files = []
@@ -89,6 +95,7 @@ class VaultManager: ObservableObject {
             try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
             let tempURL = tempDir.appendingPathComponent(vaultFile.originalName)
             try decrypted.write(to: tempURL)
+            openedTempURLs.append(tempURL)
             NSWorkspace.shared.open(tempURL)
             lastError = nil
         } catch {

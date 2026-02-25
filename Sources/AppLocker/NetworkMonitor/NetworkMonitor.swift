@@ -18,13 +18,14 @@ class NetworkMonitor: ObservableObject {
 
     func startRefreshing() {
         refreshTask?.cancel()
-        refreshTask = Task { [weak self] in
+        refreshTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
-                if let self = self, await self.shouldRefresh() {
+                guard let self else { break }
+                if !self.isPaused {
                     let raw = await self.fetchLsofOutput()
                     let parsed = self.parseConnections(raw)
                     let filtered = self.applyFilter(parsed)
-                    await MainActor.run { self.connections = filtered }
+                    self.connections = filtered
                     await self.annotateOrgs()
                 }
                 try? await Task.sleep(nanoseconds: 3_000_000_000)
@@ -32,9 +33,6 @@ class NetworkMonitor: ObservableObject {
         }
     }
 
-    private func shouldRefresh() async -> Bool {
-        return await MainActor.run { !self.isPaused }
-    }
 
     func stopRefreshing() {
         refreshTask?.cancel(); refreshTask = nil
@@ -134,10 +132,8 @@ class NetworkMonitor: ObservableObject {
         for ip in unique {
             let org = await whoisOrg(for: ip)
             orgCache[ip] = org ?? "Unknown"
-            await MainActor.run {
-                for i in self.connections.indices where self.connections[i].remoteIP == ip {
-                    self.connections[i].remoteOrg = self.orgCache[ip] ?? ""
-                }
+            for i in connections.indices where connections[i].remoteIP == ip {
+                connections[i].remoteOrg = orgCache[ip] ?? ""
             }
         }
     }

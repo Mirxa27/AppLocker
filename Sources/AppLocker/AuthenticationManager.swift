@@ -168,45 +168,49 @@ class AuthenticationManager: ObservableObject {
     private func startLockout(duration: TimeInterval) {
         isLockedOut = true
         lockoutEndTime = Date().addingTimeInterval(duration)
-        
+
         UserDefaults.standard.set(lockoutEndTime!.timeIntervalSince1970, forKey: "com.applocker.lockoutEndTime")
-        
+
         lockoutTimer?.invalidate()
         lockoutTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
-            guard let self = self else {
-                timer.invalidate()
-                return
-            }
-            if let endTime = self.lockoutEndTime, endTime <= Date() {
-                self.isLockedOut = false
-                self.lockoutEndTime = nil
-                timer.invalidate()
-                self.lockoutTimer = nil
-                UserDefaults.standard.removeObject(forKey: "com.applocker.lockoutEndTime")
+            DispatchQueue.main.async {
+                guard let self = self else {
+                    timer.invalidate()
+                    return
+                }
+                if let endTime = self.lockoutEndTime, endTime <= Date() {
+                    self.isLockedOut = false
+                    self.lockoutEndTime = nil
+                    timer.invalidate()
+                    self.lockoutTimer = nil
+                    UserDefaults.standard.removeObject(forKey: "com.applocker.lockoutEndTime")
+                }
             }
         }
     }
-    
+
     private func checkLockoutStatus() {
         if let savedEndTime = UserDefaults.standard.object(forKey: "com.applocker.lockoutEndTime") as? TimeInterval {
             let endDate = Date(timeIntervalSince1970: savedEndTime)
             if endDate > Date() {
                 isLockedOut = true
                 lockoutEndTime = endDate
-                
+
                 // Start countdown timer
                 lockoutTimer?.invalidate()
                 lockoutTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
-                    guard let self = self else {
-                        timer.invalidate()
-                        return
-                    }
-                    if let endTime = self.lockoutEndTime, endTime <= Date() {
-                        self.isLockedOut = false
-                        self.lockoutEndTime = nil
-                        timer.invalidate()
-                        self.lockoutTimer = nil
-                        UserDefaults.standard.removeObject(forKey: "com.applocker.lockoutEndTime")
+                    DispatchQueue.main.async {
+                        guard let self = self else {
+                            timer.invalidate()
+                            return
+                        }
+                        if let endTime = self.lockoutEndTime, endTime <= Date() {
+                            self.isLockedOut = false
+                            self.lockoutEndTime = nil
+                            timer.invalidate()
+                            self.lockoutTimer = nil
+                            UserDefaults.standard.removeObject(forKey: "com.applocker.lockoutEndTime")
+                        }
                     }
                 }
             } else {

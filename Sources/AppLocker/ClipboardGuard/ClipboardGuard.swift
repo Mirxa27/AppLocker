@@ -61,8 +61,9 @@ class ClipboardGuard: ObservableObject {
     private func scheduleClear() {
         clearWorkItem?.cancel()
         secondsUntilClear = clearDelaySeconds
-        let item = DispatchWorkItem { [weak self] in
-            guard let self else { return }
+        // Strong capture is safe: ClipboardGuard is a singleton and must not be deallocated.
+        // Weak capture would cause clipboard to silently NOT clear if timing edge cases occur.
+        let item = DispatchWorkItem { [self] in
             NSPasteboard.general.clearContents()
             self.secondsUntilClear = 0
             self.recentEvents.insert(ClipboardEvent(timestamp: Date(), estimatedCharCount: 0), at: 0)

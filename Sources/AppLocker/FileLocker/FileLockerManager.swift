@@ -136,6 +136,9 @@ class FileLockerManager: ObservableObject {
             guard container.prefix(4) == aplkMagic else {
                 throw FileLockerError.invalidFormat("bad magic bytes")
             }
+            guard container[4] == aplkVersion else {
+                throw FileLockerError.invalidFormat("unsupported version \(container[4])")
+            }
             let salt = container[5..<37]
             let ciphertext = container[37...]
             let key = CryptoHelper.deriveKey(passcode: passcode, salt: salt, context: "applocker.filelockr.v1")
