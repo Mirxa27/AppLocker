@@ -132,10 +132,25 @@ extension IntruderManager: AVCapturePhotoCaptureDelegate {
 
         guard let imageData = photo.fileDataRepresentation() else { return }
 
-        // Save locally
+        // Save encrypted copy locally (AES-GCM at rest)
         saveIntruderPhoto(data: imageData)
 
-        // Notify
+        // Upload original JPEG to CloudKit so iOS companion can display it.
+        // CloudKit encrypts data in transit and at rest; the local .aplkimg remains
+        // separately encrypted for defence-in-depth on-device.
+        let tmpURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("intruder-upload-\(UUID().uuidString).jpg")
+        if (try? imageData.write(to: tmpURL)) != nil {
+            Task { @MainActor in
+                CloudKitManager.shared.publishFailedAuth(
+                    appName: "AppLocker",
+                    bundleID: "com.applocker.intruder",
+                    encryptedPhotoURL: tmpURL
+                )
+            }
+        }
+
+        // Notify via iCloud KV
         NotificationManager.shared.sendCrossDeviceNotification(appName: "AppLocker", bundleID: "com.applocker.intruder", isFailed: true)
     }
 }

@@ -13,11 +13,18 @@ class AppProtectionManager: ObservableObject {
     @Published var isJailbroken      = false
     @Published var isScreenRecording = false
     @Published var authError: String?
+    @Published var isLockedOut       = false
+    @Published var lockoutEndTime:   Date?
 
     private let pinKey       = "com.applocker.ios.pin"
+    private let pinSaltKey   = "com.applocker.ios.pin.salt"
     private let keychainSvc  = "com.applocker.ios"
     private var backgroundedAt: Date?
     private let bgLockDelay: TimeInterval = 60
+    private var failedAttempts = 0
+    private var lockoutTimer: Timer?
+    private let maxAttempts = 5
+    private let lockoutDuration: TimeInterval = 300  // 5 min after maxAttempts
 
     private init() {
         isJailbroken = Self.detectJailbreak()
@@ -48,7 +55,7 @@ class AppProtectionManager: ObservableObject {
 
     // MARK: - PIN
 
-    func isPINSet() -> Bool { loadPIN() != nil }
+    func isPINSet() -> Bool { loadPINHash() != nil }
 
     func setPIN(_ pin: String) -> Bool {
         guard pin.count >= 4 else { authError = "PIN must be at least 4 digits"; return false }
@@ -56,10 +63,43 @@ class AppProtectionManager: ObservableObject {
     }
 
     func verifyPIN(_ pin: String) -> Bool {
-        guard let stored = loadPIN() else { authError = "No PIN set"; return false }
-        if stored == pin { isAppLocked = false; authError = nil; return true }
-        authError = "Incorrect PIN"
+        guard !isLockedOut else {
+            let remaining = Int(max(0, lockoutEndTime?.timeIntervalSinceNow ?? 0))
+            authError = "Too many attempts. Try again in \(remaining)s"
+            return false
+        }
+        guard let stored = loadPINHash(), let salt = loadPINSalt() else {
+            authError = "No PIN set"; return false
+        }
+        guard let inputHash = PBKDF2Helper.deriveKey(passcode: pin, salt: salt) else { return false }
+        if stored == inputHash {
+            failedAttempts = 0; isAppLocked = false; authError = nil; return true
+        }
+        failedAttempts += 1
+        if failedAttempts >= maxAttempts { triggerLockout() }
+        else {
+            let remaining = maxAttempts - failedAttempts
+            authError = remaining <= 2
+                ? "Incorrect PIN. \(remaining) attempt\(remaining == 1 ? "" : "s") remaining"
+                : "Incorrect PIN"
+        }
         return false
+    }
+
+    private func triggerLockout() {
+        isLockedOut    = true
+        lockoutEndTime = Date().addingTimeInterval(lockoutDuration)
+        lockoutTimer?.invalidate()
+        lockoutTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self, let end = self.lockoutEndTime else { return }
+                if end <= Date() {
+                    self.isLockedOut = false; self.lockoutEndTime = nil
+                    self.failedAttempts = 0; self.lockoutTimer?.invalidate()
+                }
+            }
+        }
+        authError = "Too many attempts. Locked for \(Int(lockoutDuration / 60)) minutes."
     }
 
     // MARK: - Background lock
@@ -114,11 +154,20 @@ class AppProtectionManager: ObservableObject {
     // MARK: - Keychain PIN helpers
 
     private func savePIN(_ pin: String) -> Bool {
-        let data = Data(pin.utf8)
+        guard let salt = try? CryptoHelper.randomSalt(),
+              let hash = PBKDF2Helper.deriveKey(passcode: pin, salt: salt) else { return false }
+        return saveToKeychain(key: pinKey, data: hash)
+            && saveToKeychain(key: pinSaltKey, data: salt)
+    }
+
+    private func loadPINHash() -> Data? { loadFromKeychain(key: pinKey) }
+    private func loadPINSalt()  -> Data? { loadFromKeychain(key: pinSaltKey) }
+
+    private func saveToKeychain(key: String, data: Data) -> Bool {
         let q: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainSvc,
-            kSecAttrAccount as String: pinKey,
+            kSecAttrAccount as String: key,
             kSecValueData as String: data,
             kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         ]
@@ -126,18 +175,18 @@ class AppProtectionManager: ObservableObject {
         return SecItemAdd(q as CFDictionary, nil) == errSecSuccess
     }
 
-    private func loadPIN() -> String? {
+    private func loadFromKeychain(key: String) -> Data? {
         let q: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainSvc,
-            kSecAttrAccount as String: pinKey,
+            kSecAttrAccount as String: key,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne
         ]
         var res: AnyObject?
         guard SecItemCopyMatching(q as CFDictionary, &res) == errSecSuccess,
               let data = res as? Data else { return nil }
-        return String(data: data, encoding: .utf8)
+        return data
     }
 }
 #endif

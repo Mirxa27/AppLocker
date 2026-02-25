@@ -112,10 +112,13 @@ class CloudKitManager: ObservableObject {
     func pruneOldRecords() {
         let cutoff = Date().addingTimeInterval(-30 * 24 * 3600)
         let predicate = NSPredicate(format: "timestamp < %@", cutoff as CVarArg)
-        for type in ["BlockedAppEvent", "FailedAuthEvent"] {
-            let q = CKQuery(recordType: type, predicate: predicate)
-            db.perform(q, inZoneWith: nil) { records, _ in
-                records?.forEach { self.db.delete(withRecordID: $0.recordID) { _, _ in } }
+        for recordType in ["BlockedAppEvent", "FailedAuthEvent"] {
+            Task { [weak self] in
+                guard let self else { return }
+                let q = CKQuery(recordType: recordType, predicate: predicate)
+                guard let results = try? await self.db.records(matching: q, resultsLimit: 500) else { return }
+                let ids = results.matchResults.compactMap { try? $0.1.get().recordID }
+                for id in ids { try? await self.db.deleteRecord(withID: id) }
             }
         }
     }

@@ -51,10 +51,11 @@ private enum CommandSigner {
 
     static func verify(_ cmd: RemoteCommand) -> Bool {
         guard let hmac = cmd.hmac,
+              let hmacData = Data(base64Encoded: hmac),
               Date().timeIntervalSince(cmd.timestamp) < 120 else { return false }
         let msg = Data((cmd.id.uuidString + cmd.action.rawValue + String(cmd.timestamp.timeIntervalSince1970)).utf8)
-        let mac = HMAC<SHA256>.authenticationCode(for: msg, using: sharedSecret())
-        return Data(mac).base64EncodedString() == hmac
+        // Constant-time comparison via CryptoKit — no timing side-channel
+        return HMAC<SHA256>.isValidAuthenticationCode(hmacData, authenticating: msg, using: sharedSecret())
     }
 }
 

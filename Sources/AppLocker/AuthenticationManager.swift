@@ -16,9 +16,13 @@ class AuthenticationManager: ObservableObject {
     @Published var failedAttempts = 0
     @Published var authenticationError: String?
     
-    private let keychainService = "com.mirxa.AppLocker"
-    private let passcodeKey = "passcode"
-    private let saltKey = "passcode_salt"
+    private let keychainService    = "com.mirxa.AppLocker"
+    private let passcodeKey        = "passcode"
+    private let saltKey            = "passcode_salt"
+    // Security-sensitive counters live in Keychain, not UserDefaults (tamper-resistant)
+    private let failedAttemptsKey  = "failed_attempts"
+    private let lockoutEndTimeKey  = "lockout_end_time"
+    private let passcodeVersionKey = "passcode_version"
     private let lockoutDurations: [Int: TimeInterval] = [
         5: 30,      // 30 seconds after 5 attempts
         8: 120,     // 2 minutes after 8 attempts
@@ -27,7 +31,6 @@ class AuthenticationManager: ObservableObject {
         20: 3600    // 1 hour after 20 attempts
     ]
     private let maxFailedAttempts = 5
-    private let passcodeVersionKey = "com.applocker.passcodeVersion"
     private var lockoutTimer: Timer?
     
     private init() {
@@ -55,7 +58,7 @@ class AuthenticationManager: ObservableObject {
         // Store in Keychain
         if storeInKeychain(key: passcodeKey, data: hashedPasscode) &&
            storeInKeychain(key: saltKey, data: salt) {
-            UserDefaults.standard.set("v2", forKey: passcodeVersionKey)
+            _ = storeInKeychain(key: passcodeVersionKey, data: Data("v2".utf8))
             return true
         }
         return false
@@ -107,7 +110,7 @@ class AuthenticationManager: ObservableObject {
         guard let storedHash = getStoredPasscode(),
               let salt = getSalt() else { return false }
 
-        let version = UserDefaults.standard.string(forKey: passcodeVersionKey) ?? "v1"
+        let version = retrieveFromKeychain(key: passcodeVersionKey).flatMap { String(data: $0, encoding: .utf8) } ?? "v1"
         if version == "v2" {
             guard let derived = hashPasscodeV2(passcode, salt: salt) else { return false }
             return storedHash == derived
@@ -131,13 +134,13 @@ class AuthenticationManager: ObservableObject {
         guard let salt = getSalt(),
               let newHash = hashPasscodeV2(passcode, salt: salt) else { return }
         _ = storeInKeychain(key: passcodeKey, data: newHash)
-        UserDefaults.standard.set("v2", forKey: passcodeVersionKey)
+        _ = storeInKeychain(key: passcodeVersionKey, data: Data("v2".utf8))
     }
 
-    // Helper for per-app passcode
+    // Helper for per-app passcode — uses PBKDF2 (v2) with a dedicated context
     func hashPasscodeForStorage(_ passcode: String) -> String? {
-        guard let salt = getSalt() else { return nil }
-        let data = hashPasscodeV1(passcode, salt: salt)
+        guard let salt = getSalt(),
+              let data = PBKDF2Helper.deriveKey(passcode: passcode, salt: salt) else { return nil }
         return data.base64EncodedString()
     }
 
@@ -188,7 +191,7 @@ class AuthenticationManager: ObservableObject {
         isLockedOut = true
         lockoutEndTime = Date().addingTimeInterval(duration)
 
-        UserDefaults.standard.set(lockoutEndTime!.timeIntervalSince1970, forKey: "com.applocker.lockoutEndTime")
+        storeDoubleInKeychain(key: lockoutEndTimeKey, value: lockoutEndTime!.timeIntervalSince1970)
 
         lockoutTimer?.invalidate()
         lockoutTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
@@ -202,14 +205,14 @@ class AuthenticationManager: ObservableObject {
                     self.lockoutEndTime = nil
                     timer.invalidate()
                     self.lockoutTimer = nil
-                    UserDefaults.standard.removeObject(forKey: "com.applocker.lockoutEndTime")
+                    _ = self.deleteFromKeychain(key: self.lockoutEndTimeKey)
                 }
             }
         }
     }
 
     private func checkLockoutStatus() {
-        if let savedEndTime = UserDefaults.standard.object(forKey: "com.applocker.lockoutEndTime") as? TimeInterval {
+        if let savedEndTime = loadDoubleFromKeychain(key: lockoutEndTimeKey) {
             let endDate = Date(timeIntervalSince1970: savedEndTime)
             if endDate > Date() {
                 isLockedOut = true
@@ -228,14 +231,14 @@ class AuthenticationManager: ObservableObject {
                             self.lockoutEndTime = nil
                             timer.invalidate()
                             self.lockoutTimer = nil
-                            UserDefaults.standard.removeObject(forKey: "com.applocker.lockoutEndTime")
+                            _ = self.deleteFromKeychain(key: self.lockoutEndTimeKey)
                         }
                     }
                 }
             } else {
                 isLockedOut = false
                 lockoutEndTime = nil
-                UserDefaults.standard.removeObject(forKey: "com.applocker.lockoutEndTime")
+                _ = deleteFromKeychain(key: lockoutEndTimeKey)
             }
         }
     }
@@ -257,11 +260,25 @@ class AuthenticationManager: ObservableObject {
     }
     
     private func loadFailedAttempts() {
-        failedAttempts = UserDefaults.standard.integer(forKey: "com.applocker.failedAttempts")
+        failedAttempts = Int(loadDoubleFromKeychain(key: failedAttemptsKey) ?? 0)
     }
-    
+
     private func saveFailedAttempts() {
-        UserDefaults.standard.set(failedAttempts, forKey: "com.applocker.failedAttempts")
+        storeDoubleInKeychain(key: failedAttemptsKey, value: Double(failedAttempts))
+    }
+
+    // MARK: - Keychain Double Helpers (for tamper-resistant counter/timestamp storage)
+
+    private func storeDoubleInKeychain(key: String, value: Double) {
+        var v = value
+        let data = Data(bytes: &v, count: MemoryLayout<Double>.size)
+        _ = storeInKeychain(key: key, data: data)
+    }
+
+    private func loadDoubleFromKeychain(key: String) -> Double? {
+        guard let data = retrieveFromKeychain(key: key),
+              data.count == MemoryLayout<Double>.size else { return nil }
+        return data.withUnsafeBytes { $0.load(as: Double.self) }
     }
     
     // MARK: - Biometric Authentication
@@ -301,9 +318,10 @@ class AuthenticationManager: ObservableObject {
             return false
         }
         
-        // Check per-app passcode if provided
-        if let appHash = appHash, let salt = getSalt() {
-            let inputHash = hashPasscodeV1(passcode, salt: salt).base64EncodedString()
+        // Check per-app passcode if provided (PBKDF2 v2)
+        if let appHash = appHash, let salt = getSalt(),
+           let derived = PBKDF2Helper.deriveKey(passcode: passcode, salt: salt) {
+            let inputHash = derived.base64EncodedString()
             if inputHash == appHash {
                 isAuthenticated = true
                 authenticationError = nil
@@ -314,7 +332,7 @@ class AuthenticationManager: ObservableObject {
 
         // Fallback to master passcode
         if verifyPasscode(passcode) {
-            let version = UserDefaults.standard.string(forKey: passcodeVersionKey) ?? "v1"
+            let version = retrieveFromKeychain(key: passcodeVersionKey).flatMap { String(data: $0, encoding: .utf8) } ?? "v1"
             if version != "v2" { upgradeToPBKDF2(passcode) }
             isAuthenticated = true
             authenticationError = nil
