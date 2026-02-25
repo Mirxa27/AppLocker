@@ -10,6 +10,12 @@ import UserNotifications
 struct MacAppLockerApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
+    init() {
+        // Set accessory policy immediately — before WindowGroup registers with the
+        // window server. This prevents any Dock icon or bounce on launch.
+        NSApp.setActivationPolicy(.accessory)
+    }
+
     var body: some Scene {
         WindowGroup {
             MacContentView()
@@ -39,9 +45,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
         #if !DEBUG
         applyAntiDebugger()
         #endif
-        // Hide from Dock — menu bar only
-        NSApp.setActivationPolicy(.accessory)
-
         // Set up notification delegate
         UNUserNotificationCenter.current().delegate = self
 
