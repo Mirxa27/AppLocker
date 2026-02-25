@@ -97,21 +97,24 @@ class VaultManager: ObservableObject {
     }
 
     func exportFile(_ vaultFile: VaultFile) {
-        guard let key = sessionKey else { lastError = "Vault is locked"; return }
         let panel = NSSavePanel()
         panel.nameFieldStringValue = vaultFile.originalName
         panel.begin { [weak self] response in
             guard response == .OK, let destURL = panel.url else { return }
-            do {
-                let encURL = self?.vaultDirectory.appendingPathComponent(vaultFile.encryptedFilename)
-                guard let encURL else { return }
-                let encrypted = try Data(contentsOf: encURL)
-                let decrypted = try CryptoHelper.decrypt(encrypted, using: key)
-                try decrypted.write(to: destURL)
-                Task { @MainActor [weak self] in self?.lastError = nil }
-            } catch {
-                Task { @MainActor [weak self] in
-                    self?.lastError = "Export failed: \(error.localizedDescription)"
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                guard let key = self.sessionKey else {
+                    self.lastError = "Vault was locked before export could complete"
+                    return
+                }
+                do {
+                    let encURL = self.vaultDirectory.appendingPathComponent(vaultFile.encryptedFilename)
+                    let encrypted = try Data(contentsOf: encURL)
+                    let decrypted = try CryptoHelper.decrypt(encrypted, using: key)
+                    try decrypted.write(to: destURL)
+                    self.lastError = nil
+                } catch {
+                    self.lastError = "Export failed: \(error.localizedDescription)"
                 }
             }
         }
