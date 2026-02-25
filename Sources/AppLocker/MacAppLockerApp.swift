@@ -22,7 +22,8 @@ struct MacAppLockerApp: App {
     }
 }
 
-class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate, NSMenuDelegate {
+@MainActor
+class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotificationCenterDelegate, NSMenuDelegate {
     var statusItem: NSStatusItem?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -35,7 +36,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         
         // Set up menu bar icon
         setupMenuBar()
-        
+
+        ScreenPrivacyManager.shared.applyWindowProtection()
+
         // Listen for iCloud KV changes (cross-device alerts)
         NotificationCenter.default.addObserver(
             self,
@@ -107,25 +110,25 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             AppMonitor.shared.startMonitoring()
         }
     }
-    
+
     @objc func relockAll() {
         AppMonitor.shared.temporarilyUnlockedApps.removeAll()
         AppMonitor.shared.addLog("Re-locked all temporarily unlocked apps via menu bar")
     }
-    
+
     // MARK: - Notification Delegate
-    
+
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                willPresent notification: UNNotification,
                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         completionHandler([.banner, .sound, .badge])
     }
-    
+
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                didReceive response: UNNotificationResponse,
                                withCompletionHandler completionHandler: @escaping () -> Void) {
         let userInfo = response.notification.request.content.userInfo
-        
+
         if response.actionIdentifier == "UNLOCK" {
             if let bundleID = userInfo["bundleID"] as? String {
                 if AuthenticationManager.shared.isAuthenticated {
@@ -138,7 +141,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
                 }
             }
         }
-        
+
         completionHandler()
     }
     
