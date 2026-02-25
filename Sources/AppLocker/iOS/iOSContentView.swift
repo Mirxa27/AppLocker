@@ -48,11 +48,11 @@ struct iOSLockScreen: View {
                     .textFieldStyle(.roundedBorder)
                     .keyboardType(.numberPad)
                     .frame(maxWidth: 200)
-                    .onSubmit { protection.verifyPIN(pin); pin = "" }
+                    .onSubmit { _ = protection.verifyPIN(pin); pin = "" }
                 if let err = protection.authError {
                     Text(err).foregroundColor(.red).font(.caption)
                 }
-                Button("Verify PIN") { protection.verifyPIN(pin); pin = "" }
+                Button("Verify PIN") { _ = protection.verifyPIN(pin); pin = "" }
                     .buttonStyle(.borderedProminent)
             }
 
@@ -82,7 +82,7 @@ struct iOSMainTabs: View {
             AlertsView()
                 .tabItem { Label("Alerts",    systemImage: "bell.badge.fill") }
             RemoteControlView()
-                .tabItem { Label("Remote",    systemImage: "tv.remote.fill") }
+                .tabItem { Label("Remote",    systemImage: "appletvremote.gen4") }
             iOSSecureNotesView()
                 .tabItem { Label("Notes",     systemImage: "note.text") }
             iOSIntruderPhotosView()

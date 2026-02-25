@@ -2,6 +2,20 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>aps-environment</key>
+    <string>production</string>
+    <key>com.apple.developer.icloud-container-identifiers</key>
+    <array>
+        <string>iCloud.com.mirxa.AppLocker</string>
+    </array>
+    <key>com.apple.developer.icloud-services</key>
+    <array>
+        <string>CloudKit</string>
+    </array>
+    <!-- KVS store (NSUbiquitousKeyValueStore) -->
+    <key>com.apple.developer.ubiquity-kvstore-identifier</key>
+    <string>$(AppIdentifierPrefix)com.mirxa.AppLocker</string>
+    <!-- Sandbox off: required for NSWorkspace process inspection + Accessibility API -->
     <key>com.apple.security.app-sandbox</key>
     <false/>
     <key>com.apple.security.automation.apple-events</key>
@@ -10,15 +24,5 @@
     <true/>
     <key>com.apple.security.personal-information.photos-library</key>
     <true/>
-    <key>com.apple.developer.icloud-services</key>
-    <array>
-        <string>CloudKit</string>
-    </array>
-    <key>com.apple.developer.icloud-container-identifiers</key>
-    <array>
-        <string>iCloud.com.mirxa.AppLocker</string>
-    </array>
-    <key>aps-environment</key>
-    <string>production</string>
 </dict>
 </plist>

@@ -51,13 +51,17 @@ class CloudKitManager: ObservableObject {
             .appendingPathComponent("locked-\(device).json")
         try? json.write(to: tmpURL)
 
-        let recID = CKRecord.ID(recordName: "locked-\(device)")
-        db.fetch(withRecordID: recID) { existing, _ in
+        // Capture db reference on MainActor before leaving the actor context
+        let database = db
+        Task.detached { [device, tmpURL] in
+            let recID = CKRecord.ID(recordName: "locked-\(device)")
+            let existing = try? await database.record(for: recID)
             let r = existing ?? CKRecord(recordType: "LockedAppList", recordID: recID)
-            r["deviceName"] = device as CKRecordValue
+            r["deviceName"] = device   as CKRecordValue
             r["apps"]       = CKAsset(fileURL: tmpURL)
-            r["updatedAt"]  = Date() as CKRecordValue
-            self.db.save(r) { _, _ in try? FileManager.default.removeItem(at: tmpURL) }
+            r["updatedAt"]  = Date()   as CKRecordValue
+            _ = try? await database.save(r)
+            try? FileManager.default.removeItem(at: tmpURL)
         }
     }
 
@@ -118,7 +122,7 @@ class CloudKitManager: ObservableObject {
                 let q = CKQuery(recordType: recordType, predicate: predicate)
                 guard let results = try? await self.db.records(matching: q, resultsLimit: 500) else { return }
                 let ids = results.matchResults.compactMap { try? $0.1.get().recordID }
-                for id in ids { try? await self.db.deleteRecord(withID: id) }
+                for id in ids { _ = try? await self.db.deleteRecord(withID: id) }
             }
         }
     }
