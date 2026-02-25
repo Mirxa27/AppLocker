@@ -206,6 +206,7 @@ class AppMonitor: ObservableObject {
             addLog("Blocked \(appName) (\(bundleID)) — terminated: \(terminated)")
             recordUsage(bundleID: bundleID, appName: appName, event: .blocked)
             NotificationManager.shared.sendBlockedAppNotification(appName: appName, bundleID: bundleID)
+            CloudKitManager.shared.publishBlockedApp(appName: appName, bundleID: bundleID)
 
             // Show unlock dialog
             self.lastBlockedBundleID = bundleID
@@ -688,6 +689,7 @@ class AppMonitor: ObservableObject {
         if let data = try? JSONEncoder().encode(lockedApps) {
             UserDefaults.standard.set(data, forKey: lockedAppsKey)
         }
+        CloudKitManager.shared.syncLockedAppList(lockedApps)
     }
 
     // MARK: - Permissions

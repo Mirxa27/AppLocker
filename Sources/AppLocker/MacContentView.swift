@@ -1401,6 +1401,7 @@ struct UnlockDialogView: View {
             error = authManager.authenticationError
             let appName = appMonitor.lastBlockedAppName ?? appMonitor.lastBlockedBundleID
             NotificationManager.shared.sendFailedAuthNotification(appName: appName, bundleID: appMonitor.lastBlockedBundleID)
+            CloudKitManager.shared.publishFailedAuth(appName: appName, bundleID: appMonitor.lastBlockedBundleID)
             appMonitor.recordUsage(bundleID: appMonitor.lastBlockedBundleID, appName: appName, event: .failedAttempt)
             withAnimation { shake += 1 }
             password = ""

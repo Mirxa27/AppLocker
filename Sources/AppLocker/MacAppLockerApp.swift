@@ -52,6 +52,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
         // Set up menu bar icon
         setupMenuBar()
         InactivityMonitor.shared.start()
+        Task { CloudKitManager.shared.pruneOldRecords() }
 
         ScreenPrivacyManager.shared.applyWindowProtection()
 
