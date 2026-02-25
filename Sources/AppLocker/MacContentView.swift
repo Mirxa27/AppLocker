@@ -310,6 +310,7 @@ struct MainInterface: View {
                     SidebarButton(title: "Clipboard Guard", icon: "clipboard.fill", isSelected: selectedTab == 9) { selectedTab = 9 }
                     SidebarButton(title: "Screen Privacy", icon: "eye.slash.fill", isSelected: selectedTab == 10) { selectedTab = 10 }
                     SidebarButton(title: "Network Monitor", icon: "network", isSelected: selectedTab == 11) { selectedTab = 11 }
+                    SidebarButton(title: "Secure Notes", icon: "lock.rectangle.stack.fill", isSelected: selectedTab == 12) { selectedTab = 12 }
 
                     Spacer()
                 }
@@ -333,6 +334,7 @@ struct MainInterface: View {
                     case 9: ClipboardGuardView()
                     case 10: ScreenPrivacyView()
                     case 11: NetworkMonitorView()
+                    case 12: SecureNotesView()
                     default: Text("Select an option")
                     }
                 }
