@@ -190,6 +190,7 @@ struct RemoteCommand: Codable {
     let bundleID: String?
     let sourceDevice: String
     let timestamp: Date
+    var hmac: String?   // HMAC-SHA256 of id+action+timestamp, base64-encoded
 }
 
 // MARK: - Vault

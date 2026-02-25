@@ -3,9 +3,60 @@
 
 import Foundation
 import UserNotifications
+import CryptoKit
+import Security
 #if os(macOS)
 import AppKit
 #endif
+
+// MARK: - Command HMAC Signer
+
+private enum CommandSigner {
+    private static let secretKey = "com.applocker.commandSecret"
+    private static let service   = "com.applocker.security"
+
+    static func sharedSecret() -> SymmetricKey {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: secretKey,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        var result: AnyObject?
+        if SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
+           let data = result as? Data {
+            return SymmetricKey(data: data)
+        }
+        var bytes = [UInt8](repeating: 0, count: 32)
+        _ = SecRandomCopyBytes(kSecRandomDefault, 32, &bytes)
+        let newSecret = Data(bytes)
+        let add: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: secretKey,
+            kSecValueData as String: newSecret,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
+            kSecAttrSynchronizable as String: kCFBooleanTrue!
+        ]
+        SecItemAdd(add as CFDictionary, nil)
+        return SymmetricKey(data: newSecret)
+    }
+
+    static func sign(_ cmd: RemoteCommand) -> String {
+        let msg = Data((cmd.id.uuidString + cmd.action.rawValue + String(cmd.timestamp.timeIntervalSince1970)).utf8)
+        let mac = HMAC<SHA256>.authenticationCode(for: msg, using: sharedSecret())
+        return Data(mac).base64EncodedString()
+    }
+
+    static func verify(_ cmd: RemoteCommand) -> Bool {
+        guard let hmac = cmd.hmac,
+              Date().timeIntervalSince(cmd.timestamp) < 120 else { return false }
+        let msg = Data((cmd.id.uuidString + cmd.action.rawValue + String(cmd.timestamp.timeIntervalSince1970)).utf8)
+        let mac = HMAC<SHA256>.authenticationCode(for: msg, using: sharedSecret())
+        return Data(mac).base64EncodedString() == hmac
+    }
+}
 
 class NotificationManager: ObservableObject {
     static let shared = NotificationManager()
@@ -211,13 +262,14 @@ class NotificationManager: ObservableObject {
     // MARK: - Remote Commands
 
     func sendRemoteCommand(_ action: RemoteCommand.Action, bundleID: String? = nil) {
-        let command = RemoteCommand(
+        var command = RemoteCommand(
             id: UUID(),
             action: action,
             bundleID: bundleID,
             sourceDevice: ProcessInfo.processInfo.hostName,
             timestamp: Date()
         )
+        command.hmac = CommandSigner.sign(command)
 
         if let data = try? JSONEncoder().encode(command) {
             NSUbiquitousKeyValueStore.default.set(data, forKey: "com.applocker.latestCommand")
@@ -256,7 +308,8 @@ class NotificationManager: ObservableObject {
         if let data = store.data(forKey: "com.applocker.latestCommand"),
            let command = try? JSONDecoder().decode(RemoteCommand.self, from: data),
            command.sourceDevice != thisDevice,
-           Date().timeIntervalSince(command.timestamp) < 60 {
+           Date().timeIntervalSince(command.timestamp) < 60,
+           CommandSigner.verify(command) {
 
              DispatchQueue.main.async {
                  NotificationCenter.default.post(name: NSNotification.Name("RemoteCommandReceived"), object: command)

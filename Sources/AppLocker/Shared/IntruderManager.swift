@@ -92,24 +92,34 @@ class IntruderManager: NSObject {
     }
 
     private func saveIntruderPhoto(data: Data) {
-        let filename = "intruder-\(Date().timeIntervalSince1970).jpg"
+        let filename = "intruder-\(Date().timeIntervalSince1970).aplkimg"
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let url = docs.appendingPathComponent(filename)
+        let url  = docs.appendingPathComponent(filename)
 
         do {
-            try data.write(to: url)
-            print("Intruder photo saved to: \(url.path)")
+            let salt = try CryptoHelper.getOrCreateSalt(keychainKey: "intruder-photos")
+            let key  = CryptoHelper.deriveKey(passcode: "intruder", salt: salt, context: "intruder")
+            let encrypted = try CryptoHelper.encrypt(data, using: key)
+            try encrypted.write(to: url)
         } catch {
-            print("Failed to save intruder photo: \(error)")
+            print("IntruderManager: failed to save encrypted photo: \(error)")
         }
     }
 
     func getIntruderPhotos() -> [URL] {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        guard let files = try? FileManager.default.contentsOfDirectory(at: docs, includingPropertiesForKeys: nil) else { return [] }
+        guard let files = try? FileManager.default.contentsOfDirectory(
+                at: docs, includingPropertiesForKeys: nil) else { return [] }
+        return files
+            .filter { $0.pathExtension == "aplkimg" }
+            .sorted { $0.lastPathComponent > $1.lastPathComponent }
+    }
 
-        return files.filter { $0.lastPathComponent.hasPrefix("intruder-") }
-                    .sorted { $0.lastPathComponent > $1.lastPathComponent }
+    func decryptIntruderPhoto(url: URL) -> Data? {
+        guard let encrypted = try? Data(contentsOf: url),
+              let salt = CryptoHelper.loadSaltFromKeychain(key: "intruder-photos") else { return nil }
+        let key = CryptoHelper.deriveKey(passcode: "intruder", salt: salt, context: "intruder")
+        return try? CryptoHelper.decrypt(encrypted, using: key)
     }
 }
 

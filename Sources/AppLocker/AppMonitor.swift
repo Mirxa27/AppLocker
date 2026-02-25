@@ -557,27 +557,95 @@ class AppMonitor: ObservableObject {
     }
 
     func exportToFile() {
-        guard let data = exportConfiguration() else { return }
-        let panel = NSSavePanel()
-        panel.title = "Export AppLocker Configuration"
-        panel.nameFieldStringValue = "AppLocker-Config.json"
-        panel.allowedContentTypes = [.json]
-        panel.begin { response in
-            guard response == .OK, let url = panel.url else { return }
-            try? data.write(to: url)
+        guard let jsonData = exportConfiguration() else { return }
+
+        // Prompt for an export passcode to encrypt the backup
+        let alert = NSAlert()
+        alert.messageText = "Encrypt Backup"
+        alert.informativeText = "Set a passcode to protect this backup file."
+        alert.addButton(withTitle: "Export")
+        alert.addButton(withTitle: "Cancel")
+        let field = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        field.placeholderString = "Export passcode"
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+        guard alert.runModal() == .alertFirstButtonReturn,
+              !field.stringValue.isEmpty else { return }
+
+        do {
+            let fileData = try Self.encryptExportData(jsonData, passcode: field.stringValue)
+            let panel = NSSavePanel()
+            panel.title = "Save Encrypted Backup"
+            panel.nameFieldStringValue = "AppLocker-backup.aplockerbackup"
+            panel.begin { response in
+                guard response == .OK, let url = panel.url else { return }
+                try? fileData.write(to: url)
+            }
+        } catch {
+            addLog("EXPORT FAILED: \(error.localizedDescription)")
         }
     }
 
     func importFromFile() {
         let panel = NSOpenPanel()
         panel.title = "Import AppLocker Configuration"
-        panel.allowedContentTypes = [.json]
+        panel.allowedContentTypes = [.json, .data]
         panel.allowsMultipleSelection = false
         panel.begin { [weak self] response in
             guard response == .OK, let url = panel.urls.first else { return }
-            guard let data = try? Data(contentsOf: url) else { return }
-            self?.importConfiguration(data: data)
+            guard let rawData = try? Data(contentsOf: url) else { return }
+
+            // Detect APLK encrypted format
+            let magic: [UInt8] = [0x41, 0x50, 0x4C, 0x4B]
+            let isEncrypted = rawData.count > 37 && rawData.prefix(4).elementsEqual(magic)
+
+            if isEncrypted {
+                let decAlert = NSAlert()
+                decAlert.messageText = "Encrypted Backup"
+                decAlert.informativeText = "Enter the passcode used when exporting."
+                decAlert.addButton(withTitle: "Decrypt")
+                decAlert.addButton(withTitle: "Cancel")
+                let decField = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+                decField.placeholderString = "Export passcode"
+                decAlert.accessoryView = decField
+                decAlert.window.initialFirstResponder = decField
+                guard decAlert.runModal() == .alertFirstButtonReturn else { return }
+                do {
+                    let jsonData = try Self.decryptExportData(rawData, passcode: decField.stringValue)
+                    self?.importConfiguration(data: jsonData)
+                } catch {
+                    let errAlert = NSAlert()
+                    errAlert.messageText = "Decryption Failed"
+                    errAlert.informativeText = error.localizedDescription
+                    errAlert.alertStyle = .critical
+                    errAlert.runModal()
+                }
+            } else {
+                self?.importConfiguration(data: rawData)
+            }
         }
+    }
+
+    // MARK: - Export Encryption Helpers
+
+    private static func encryptExportData(_ payload: Data, passcode: String) throws -> Data {
+        let salt = try CryptoHelper.randomSalt()
+        let key  = CryptoHelper.deriveKey(passcode: passcode, salt: salt, context: "export")
+        let ciphertext = try CryptoHelper.encrypt(payload, using: key)
+        var result = Data()
+        result.append(contentsOf: [0x41, 0x50, 0x4C, 0x4B])  // "APLK"
+        result.append(0x01)                                     // version
+        result.append(salt)
+        result.append(ciphertext)
+        return result
+    }
+
+    private static func decryptExportData(_ data: Data, passcode: String) throws -> Data {
+        // Header: 4-byte magic + 1-byte version + 32-byte salt + ciphertext
+        let salt = data[5..<37]
+        let ciphertext = data[37...]
+        let key = CryptoHelper.deriveKey(passcode: passcode, salt: Data(salt), context: "export")
+        return try CryptoHelper.decrypt(Data(ciphertext), using: key)
     }
 
     func importConfiguration(data: Data) {
