@@ -27,6 +27,7 @@ class AuthenticationManager: ObservableObject {
         20: 3600    // 1 hour after 20 attempts
     ]
     private let maxFailedAttempts = 5
+    private let passcodeVersionKey = "com.applocker.passcodeVersion"
     private var lockoutTimer: Timer?
     
     private init() {
@@ -49,11 +50,12 @@ class AuthenticationManager: ObservableObject {
 
         guard result == errSecSuccess else { return false }
         
-        let hashedPasscode = hashPasscode(passcode, salt: salt)
+        guard let hashedPasscode = hashPasscodeV2(passcode, salt: salt) else { return false }
         
         // Store in Keychain
         if storeInKeychain(key: passcodeKey, data: hashedPasscode) &&
            storeInKeychain(key: saltKey, data: salt) {
+            UserDefaults.standard.set("v2", forKey: passcodeVersionKey)
             return true
         }
         return false
@@ -104,21 +106,38 @@ class AuthenticationManager: ObservableObject {
     func verifyPasscode(_ passcode: String) -> Bool {
         guard let storedHash = getStoredPasscode(),
               let salt = getSalt() else { return false }
-        
-        let inputHash = hashPasscode(passcode, salt: salt)
-        return storedHash == inputHash
+
+        let version = UserDefaults.standard.string(forKey: passcodeVersionKey) ?? "v1"
+        if version == "v2" {
+            guard let derived = hashPasscodeV2(passcode, salt: salt) else { return false }
+            return storedHash == derived
+        } else {
+            return storedHash == hashPasscodeV1(passcode, salt: salt)
+        }
     }
     
-    private func hashPasscode(_ passcode: String, salt: Data) -> Data {
+    private func hashPasscodeV1(_ passcode: String, salt: Data) -> Data {
         let inputData = Data(passcode.utf8) + salt
         let hash = SHA256.hash(data: inputData)
         return Data(hash)
     }
-    
+
+    private func hashPasscodeV2(_ passcode: String, salt: Data) -> Data? {
+        return PBKDF2Helper.deriveKey(passcode: passcode, salt: salt)
+    }
+
+    /// Call after a successful v1 login to silently upgrade the stored hash.
+    private func upgradeToPBKDF2(_ passcode: String) {
+        guard let salt = getSalt(),
+              let newHash = hashPasscodeV2(passcode, salt: salt) else { return }
+        _ = storeInKeychain(key: passcodeKey, data: newHash)
+        UserDefaults.standard.set("v2", forKey: passcodeVersionKey)
+    }
+
     // Helper for per-app passcode
     func hashPasscodeForStorage(_ passcode: String) -> String? {
         guard let salt = getSalt() else { return nil }
-        let data = hashPasscode(passcode, salt: salt)
+        let data = hashPasscodeV1(passcode, salt: salt)
         return data.base64EncodedString()
     }
 
@@ -284,7 +303,7 @@ class AuthenticationManager: ObservableObject {
         
         // Check per-app passcode if provided
         if let appHash = appHash, let salt = getSalt() {
-            let inputHash = hashPasscode(passcode, salt: salt).base64EncodedString()
+            let inputHash = hashPasscodeV1(passcode, salt: salt).base64EncodedString()
             if inputHash == appHash {
                 isAuthenticated = true
                 authenticationError = nil
@@ -295,6 +314,8 @@ class AuthenticationManager: ObservableObject {
 
         // Fallback to master passcode
         if verifyPasscode(passcode) {
+            let version = UserDefaults.standard.string(forKey: passcodeVersionKey) ?? "v1"
+            if version != "v2" { upgradeToPBKDF2(passcode) }
             isAuthenticated = true
             authenticationError = nil
             resetFailedAttempts()
