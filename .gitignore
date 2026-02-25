@@ -1,9 +1,9 @@
-# Xcode
-*.xcodeproj
-*.xcworkspace
+# Xcode user data (keep project files)
 DerivedData/
 *.xcuserstate
 *.xcuserdata/
+AppLocker.xcodeproj/xcuserdata/
+AppLocker.xcodeproj/project.xcworkspace/xcuserdata/
 
 # Swift Package Manager
 .build/
@@ -60,3 +60,5 @@ Temporary Items
 # Environment
 .env
 .env.local
+AppLocker.xcodeproj/xcuserdata/
+AppLocker.xcodeproj/project.xcworkspace/xcuserdata/

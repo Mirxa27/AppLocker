@@ -1,0 +1,652 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		02474A0EBAA78A32CBE86667 /* FileLockerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6D26B3C88DAE3BEEF3F057E /* FileLockerManager.swift */; };
+		08667EB5A0C5C34A3ED82804 /* ClipboardGuardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4E39D87CA8ED61D8CEBEA3F /* ClipboardGuardView.swift */; };
+		097A74D9D47DF5DBEC11132F /* PBKDF2Helper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7D05A166D18E025ACDEDA20 /* PBKDF2Helper.swift */; };
+		0B29D22425A61C99EEEF63A4 /* InactivityMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8ECBD2FB336E1BB777C270C5 /* InactivityMonitor.swift */; };
+		12A810A5048085C098BBC0F6 /* InactivityMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8ECBD2FB336E1BB777C270C5 /* InactivityMonitor.swift */; };
+		12E55AFB0BC02EBF8D685C36 /* IntruderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0ECCB73AB5F53C4DE4B62CF /* IntruderManager.swift */; };
+		1878DB288A76C6246119AB73 /* CryptoHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3345518D7FAB7A1B778E13E0 /* CryptoHelper.swift */; };
+		1CB2718E8F058709233E2596 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB7FA2E3AAB49C2B9AED67AD /* DashboardView.swift */; };
+		1F7FFF241E92F50402B69DED /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A932A9C64198B92A0E70FE6 /* NotificationManager.swift */; };
+		2BE55D2B9140CAB6EBBE595F /* iOSSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F45A40BE06D632D040111744 /* iOSSettingsView.swift */; };
+		2C6ED58D4415801F1BBD7CB8 /* MacContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3552440740293B5C0BE39957 /* MacContentView.swift */; };
+		3ABFB4C80ADCC6FB963E8BA8 /* IntruderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0ECCB73AB5F53C4DE4B62CF /* IntruderManager.swift */; };
+		3FEC782EE1CCE50591C6EF58 /* NetworkMonitorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17A731B3BD187F11BACABBDB /* NetworkMonitorView.swift */; };
+		4CB9949DF987A305F7544498 /* FileLockerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01D92375103E41F760E0B3B5 /* FileLockerView.swift */; };
+		4E13096445370FFF8ACCC0EB /* AppLockerApp_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9637AFA612BEAFE89DF5C4B /* AppLockerApp_iOS.swift */; };
+		4E5590B48E8922194440DC6B /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A932A9C64198B92A0E70FE6 /* NotificationManager.swift */; };
+		5052084E63AC4A2934AF5C78 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13432AF2DB2DFC29066FB236 /* Models.swift */; };
+		5146FBDE007954935A78A13A /* AppProtectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 177EF647462EB2FD9277E581 /* AppProtectionManager.swift */; };
+		5788CAB1C912EA30E50902FC /* SecureNotesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8931D2B844481366D713C2E6 /* SecureNotesManager.swift */; };
+		59EA0CA9FAE47A37AC57DA20 /* MacAppLockerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EC7D7A5BA720F58D22A91AA /* MacAppLockerApp.swift */; };
+		75E6436284E9AAEE50F34794 /* BlockingOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3426A7D3410EE564D1F72BF /* BlockingOverlayView.swift */; };
+		7A65D5299B62348177C82CC5 /* iOSContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AC456C3128977EBC38C9B21 /* iOSContentView.swift */; };
+		7DFC7E7C980821E534639871 /* AuthenticationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D52FC0CEF73F80C284DFFED6 /* AuthenticationManager.swift */; };
+		837440CABC4F8D6EC4DD3954 /* SecureNotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70102F83B656C5B3A0C95472 /* SecureNotesView.swift */; };
+		84ABBCC2EFF83E5301080711 /* AppMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4790B3D849A74237E9C9F6E8 /* AppMonitor.swift */; };
+		8BD9853F833133355953772A /* iOSIntruderPhotosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E43A26EEC5B37F0E1C08F26 /* iOSIntruderPhotosView.swift */; };
+		9BF4C36E7F69548779D98B4C /* VaultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6761502D80BEC8DBE1AA4AE2 /* VaultView.swift */; };
+		A0C18AC3CC493CCC78891C8E /* AlertsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 843337CB44E71F8A232EEC62 /* AlertsView.swift */; };
+		A25B6E5ACDFB18D2AEB9A35B /* ClipboardGuard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AF938CEDB043C385C353BBF /* ClipboardGuard.swift */; };
+		A4613D2CCFE60C662F0CC134 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13432AF2DB2DFC29066FB236 /* Models.swift */; };
+		AC8D2D3E4D6CA110BED9FF31 /* ScreenPrivacyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEF5F7239765CAF590A4C91B /* ScreenPrivacyManager.swift */; };
+		B174D47DE78AF71ECAC498F2 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 926AB1334A90C00642975611 /* NetworkMonitor.swift */; };
+		C16964F3C225621F95192276 /* ScreenPrivacyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D57909D5B5F7462A2B88FEE8 /* ScreenPrivacyView.swift */; };
+		C24FE8F1CC6AEB9DB685878D /* VaultManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB8FBE4EB554CC600FF6DDE0 /* VaultManager.swift */; };
+		CEDAA298E28B5383129C8C31 /* RemoteControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5706467657D7417A4F615BB /* RemoteControlView.swift */; };
+		D2576936A6F17F48955ADBA3 /* PBKDF2Helper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7D05A166D18E025ACDEDA20 /* PBKDF2Helper.swift */; };
+		D2B40DAF2D2129A4B4EA25B1 /* BlockingOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3426A7D3410EE564D1F72BF /* BlockingOverlayView.swift */; };
+		E06B5CB7734206482B84A8D4 /* CloudKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 158137FEAC983C7F20959107 /* CloudKitManager.swift */; };
+		E13029DB3A33CCF782AC757E /* CryptoHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3345518D7FAB7A1B778E13E0 /* CryptoHelper.swift */; };
+		F1CCA0983AE043EF047B4434 /* CloudKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 158137FEAC983C7F20959107 /* CloudKitManager.swift */; };
+		F1FBC3A8A54777B16E0A23E9 /* iOSSecureNotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58EC0CF3A6146E6C01BB25DD /* iOSSecureNotesView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		01D92375103E41F760E0B3B5 /* FileLockerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileLockerView.swift; sourceTree = "<group>"; };
+		0AF938CEDB043C385C353BBF /* ClipboardGuard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardGuard.swift; sourceTree = "<group>"; };
+		0EC7D7A5BA720F58D22A91AA /* MacAppLockerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacAppLockerApp.swift; sourceTree = "<group>"; };
+		13432AF2DB2DFC29066FB236 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		158137FEAC983C7F20959107 /* CloudKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitManager.swift; sourceTree = "<group>"; };
+		177EF647462EB2FD9277E581 /* AppProtectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppProtectionManager.swift; sourceTree = "<group>"; };
+		17A731B3BD187F11BACABBDB /* NetworkMonitorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitorView.swift; sourceTree = "<group>"; };
+		1E43A26EEC5B37F0E1C08F26 /* iOSIntruderPhotosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSIntruderPhotosView.swift; sourceTree = "<group>"; };
+		3345518D7FAB7A1B778E13E0 /* CryptoHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CryptoHelper.swift; sourceTree = "<group>"; };
+		3552440740293B5C0BE39957 /* MacContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacContentView.swift; sourceTree = "<group>"; };
+		4790B3D849A74237E9C9F6E8 /* AppMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMonitor.swift; sourceTree = "<group>"; };
+		58EC0CF3A6146E6C01BB25DD /* iOSSecureNotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSSecureNotesView.swift; sourceTree = "<group>"; };
+		6761502D80BEC8DBE1AA4AE2 /* VaultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultView.swift; sourceTree = "<group>"; };
+		6AC456C3128977EBC38C9B21 /* iOSContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSContentView.swift; sourceTree = "<group>"; };
+		6C66F2C2D536D29202AB3B23 /* AppLocker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AppLocker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		70102F83B656C5B3A0C95472 /* SecureNotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureNotesView.swift; sourceTree = "<group>"; };
+		843337CB44E71F8A232EEC62 /* AlertsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertsView.swift; sourceTree = "<group>"; };
+		8931D2B844481366D713C2E6 /* SecureNotesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureNotesManager.swift; sourceTree = "<group>"; };
+		8ECBD2FB336E1BB777C270C5 /* InactivityMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InactivityMonitor.swift; sourceTree = "<group>"; };
+		926AB1334A90C00642975611 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
+		9A932A9C64198B92A0E70FE6 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		A3426A7D3410EE564D1F72BF /* BlockingOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockingOverlayView.swift; sourceTree = "<group>"; };
+		A4F0F46A17D052502C37117F /* AppLockerCompanion.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = AppLockerCompanion.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BEF5F7239765CAF590A4C91B /* ScreenPrivacyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenPrivacyManager.swift; sourceTree = "<group>"; };
+		C0ECCB73AB5F53C4DE4B62CF /* IntruderManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntruderManager.swift; sourceTree = "<group>"; };
+		C4E39D87CA8ED61D8CEBEA3F /* ClipboardGuardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardGuardView.swift; sourceTree = "<group>"; };
+		C7D05A166D18E025ACDEDA20 /* PBKDF2Helper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PBKDF2Helper.swift; sourceTree = "<group>"; };
+		C9637AFA612BEAFE89DF5C4B /* AppLockerApp_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLockerApp_iOS.swift; sourceTree = "<group>"; };
+		D52FC0CEF73F80C284DFFED6 /* AuthenticationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationManager.swift; sourceTree = "<group>"; };
+		D57909D5B5F7462A2B88FEE8 /* ScreenPrivacyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenPrivacyView.swift; sourceTree = "<group>"; };
+		D6D26B3C88DAE3BEEF3F057E /* FileLockerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileLockerManager.swift; sourceTree = "<group>"; };
+		DB7FA2E3AAB49C2B9AED67AD /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		DB8FBE4EB554CC600FF6DDE0 /* VaultManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultManager.swift; sourceTree = "<group>"; };
+		F45A40BE06D632D040111744 /* iOSSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSSettingsView.swift; sourceTree = "<group>"; };
+		F5706467657D7417A4F615BB /* RemoteControlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteControlView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0A6F95F94E660487CFCCCAB2 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				A3426A7D3410EE564D1F72BF /* BlockingOverlayView.swift */,
+				158137FEAC983C7F20959107 /* CloudKitManager.swift */,
+				3345518D7FAB7A1B778E13E0 /* CryptoHelper.swift */,
+				8ECBD2FB336E1BB777C270C5 /* InactivityMonitor.swift */,
+				C0ECCB73AB5F53C4DE4B62CF /* IntruderManager.swift */,
+				13432AF2DB2DFC29066FB236 /* Models.swift */,
+				C7D05A166D18E025ACDEDA20 /* PBKDF2Helper.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		2E709FF11D49FD9524247FDF /* ClipboardGuard */ = {
+			isa = PBXGroup;
+			children = (
+				0AF938CEDB043C385C353BBF /* ClipboardGuard.swift */,
+				C4E39D87CA8ED61D8CEBEA3F /* ClipboardGuardView.swift */,
+			);
+			path = ClipboardGuard;
+			sourceTree = "<group>";
+		};
+		38C273188ADF4307784AB665 /* Alerts */ = {
+			isa = PBXGroup;
+			children = (
+				843337CB44E71F8A232EEC62 /* AlertsView.swift */,
+			);
+			path = Alerts;
+			sourceTree = "<group>";
+		};
+		5C2976B4FA921790CDCB5FBA /* SecureVault */ = {
+			isa = PBXGroup;
+			children = (
+				DB8FBE4EB554CC600FF6DDE0 /* VaultManager.swift */,
+				6761502D80BEC8DBE1AA4AE2 /* VaultView.swift */,
+			);
+			path = SecureVault;
+			sourceTree = "<group>";
+		};
+		64AF2AEB2FB7186ADD5D0DCA /* FileLocker */ = {
+			isa = PBXGroup;
+			children = (
+				D6D26B3C88DAE3BEEF3F057E /* FileLockerManager.swift */,
+				01D92375103E41F760E0B3B5 /* FileLockerView.swift */,
+			);
+			path = FileLocker;
+			sourceTree = "<group>";
+		};
+		664A3DD0955620EBCC66EF26 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				C9637AFA612BEAFE89DF5C4B /* AppLockerApp_iOS.swift */,
+				6AC456C3128977EBC38C9B21 /* iOSContentView.swift */,
+				38C273188ADF4307784AB665 /* Alerts */,
+				6D2CDADF42E778778A665E2B /* Dashboard */,
+				CCF056F1893983C390CFBB7F /* IntruderPhotos */,
+				D9BF09B94DC962E892200326 /* Protection */,
+				F41050D9582AE13210467E6C /* RemoteControl */,
+				6D9770ED3CD3EB0D02C69E9F /* SecureNotes */,
+				B5154DADD8A1C6221225AD2E /* Settings */,
+			);
+			path = iOS;
+			sourceTree = "<group>";
+		};
+		6D2CDADF42E778778A665E2B /* Dashboard */ = {
+			isa = PBXGroup;
+			children = (
+				DB7FA2E3AAB49C2B9AED67AD /* DashboardView.swift */,
+			);
+			path = Dashboard;
+			sourceTree = "<group>";
+		};
+		6D9770ED3CD3EB0D02C69E9F /* SecureNotes */ = {
+			isa = PBXGroup;
+			children = (
+				58EC0CF3A6146E6C01BB25DD /* iOSSecureNotesView.swift */,
+			);
+			path = SecureNotes;
+			sourceTree = "<group>";
+		};
+		7C4ED9A637C730899D5FB9E7 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				ACA3A77C903F68F2D3937DD3 /* AppLocker */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		8E0F6311E271BB1A63CD3BF9 = {
+			isa = PBXGroup;
+			children = (
+				7C4ED9A637C730899D5FB9E7 /* Sources */,
+				CBEA73997D78AB8F6D3E9A93 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		AC0A1C28BF2C624F421DA411 /* NetworkMonitor */ = {
+			isa = PBXGroup;
+			children = (
+				926AB1334A90C00642975611 /* NetworkMonitor.swift */,
+				17A731B3BD187F11BACABBDB /* NetworkMonitorView.swift */,
+			);
+			path = NetworkMonitor;
+			sourceTree = "<group>";
+		};
+		ACA3A77C903F68F2D3937DD3 /* AppLocker */ = {
+			isa = PBXGroup;
+			children = (
+				4790B3D849A74237E9C9F6E8 /* AppMonitor.swift */,
+				D52FC0CEF73F80C284DFFED6 /* AuthenticationManager.swift */,
+				0EC7D7A5BA720F58D22A91AA /* MacAppLockerApp.swift */,
+				3552440740293B5C0BE39957 /* MacContentView.swift */,
+				9A932A9C64198B92A0E70FE6 /* NotificationManager.swift */,
+				2E709FF11D49FD9524247FDF /* ClipboardGuard */,
+				64AF2AEB2FB7186ADD5D0DCA /* FileLocker */,
+				664A3DD0955620EBCC66EF26 /* iOS */,
+				AC0A1C28BF2C624F421DA411 /* NetworkMonitor */,
+				FC4E6CFC598CFF88F7583A19 /* ScreenPrivacy */,
+				BA265F4B96C629E8E513102A /* SecureNotes */,
+				5C2976B4FA921790CDCB5FBA /* SecureVault */,
+				0A6F95F94E660487CFCCCAB2 /* Shared */,
+			);
+			path = AppLocker;
+			sourceTree = "<group>";
+		};
+		B5154DADD8A1C6221225AD2E /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				F45A40BE06D632D040111744 /* iOSSettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		BA265F4B96C629E8E513102A /* SecureNotes */ = {
+			isa = PBXGroup;
+			children = (
+				8931D2B844481366D713C2E6 /* SecureNotesManager.swift */,
+				70102F83B656C5B3A0C95472 /* SecureNotesView.swift */,
+			);
+			path = SecureNotes;
+			sourceTree = "<group>";
+		};
+		CBEA73997D78AB8F6D3E9A93 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6C66F2C2D536D29202AB3B23 /* AppLocker.app */,
+				A4F0F46A17D052502C37117F /* AppLockerCompanion.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CCF056F1893983C390CFBB7F /* IntruderPhotos */ = {
+			isa = PBXGroup;
+			children = (
+				1E43A26EEC5B37F0E1C08F26 /* iOSIntruderPhotosView.swift */,
+			);
+			path = IntruderPhotos;
+			sourceTree = "<group>";
+		};
+		D9BF09B94DC962E892200326 /* Protection */ = {
+			isa = PBXGroup;
+			children = (
+				177EF647462EB2FD9277E581 /* AppProtectionManager.swift */,
+			);
+			path = Protection;
+			sourceTree = "<group>";
+		};
+		F41050D9582AE13210467E6C /* RemoteControl */ = {
+			isa = PBXGroup;
+			children = (
+				F5706467657D7417A4F615BB /* RemoteControlView.swift */,
+			);
+			path = RemoteControl;
+			sourceTree = "<group>";
+		};
+		FC4E6CFC598CFF88F7583A19 /* ScreenPrivacy */ = {
+			isa = PBXGroup;
+			children = (
+				BEF5F7239765CAF590A4C91B /* ScreenPrivacyManager.swift */,
+				D57909D5B5F7462A2B88FEE8 /* ScreenPrivacyView.swift */,
+			);
+			path = ScreenPrivacy;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		838A50B8352CDA35BE9467DB /* AppLocker */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AAE4AD402ACAD86ED00854F3 /* Build configuration list for PBXNativeTarget "AppLocker" */;
+			buildPhases = (
+				5C51E605B5FB1088D2A76E79 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = AppLocker;
+			packageProductDependencies = (
+			);
+			productName = AppLocker;
+			productReference = 6C66F2C2D536D29202AB3B23 /* AppLocker.app */;
+			productType = "com.apple.product-type.application";
+		};
+		B56C08CC201FF41AF5D741F4 /* AppLockerCompanion */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1FBF199B040279E653FEC2E1 /* Build configuration list for PBXNativeTarget "AppLockerCompanion" */;
+			buildPhases = (
+				02ED91286BC6E064EBB7F8FA /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = AppLockerCompanion;
+			packageProductDependencies = (
+			);
+			productName = AppLockerCompanion;
+			productReference = A4F0F46A17D052502C37117F /* AppLockerCompanion.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A8932C059C5524D8EEE5AB31 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					838A50B8352CDA35BE9467DB = {
+						DevelopmentTeam = "";
+					};
+					B56C08CC201FF41AF5D741F4 = {
+						DevelopmentTeam = "";
+					};
+				};
+			};
+			buildConfigurationList = A6A8C1B754898942F8811D6C /* Build configuration list for PBXProject "AppLocker" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 8E0F6311E271BB1A63CD3BF9;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				838A50B8352CDA35BE9467DB /* AppLocker */,
+				B56C08CC201FF41AF5D741F4 /* AppLockerCompanion */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		02ED91286BC6E064EBB7F8FA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A0C18AC3CC493CCC78891C8E /* AlertsView.swift in Sources */,
+				4E13096445370FFF8ACCC0EB /* AppLockerApp_iOS.swift in Sources */,
+				5146FBDE007954935A78A13A /* AppProtectionManager.swift in Sources */,
+				75E6436284E9AAEE50F34794 /* BlockingOverlayView.swift in Sources */,
+				F1CCA0983AE043EF047B4434 /* CloudKitManager.swift in Sources */,
+				1878DB288A76C6246119AB73 /* CryptoHelper.swift in Sources */,
+				1CB2718E8F058709233E2596 /* DashboardView.swift in Sources */,
+				12A810A5048085C098BBC0F6 /* InactivityMonitor.swift in Sources */,
+				3ABFB4C80ADCC6FB963E8BA8 /* IntruderManager.swift in Sources */,
+				A4613D2CCFE60C662F0CC134 /* Models.swift in Sources */,
+				4E5590B48E8922194440DC6B /* NotificationManager.swift in Sources */,
+				097A74D9D47DF5DBEC11132F /* PBKDF2Helper.swift in Sources */,
+				CEDAA298E28B5383129C8C31 /* RemoteControlView.swift in Sources */,
+				7A65D5299B62348177C82CC5 /* iOSContentView.swift in Sources */,
+				8BD9853F833133355953772A /* iOSIntruderPhotosView.swift in Sources */,
+				F1FBC3A8A54777B16E0A23E9 /* iOSSecureNotesView.swift in Sources */,
+				2BE55D2B9140CAB6EBBE595F /* iOSSettingsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5C51E605B5FB1088D2A76E79 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				84ABBCC2EFF83E5301080711 /* AppMonitor.swift in Sources */,
+				7DFC7E7C980821E534639871 /* AuthenticationManager.swift in Sources */,
+				D2B40DAF2D2129A4B4EA25B1 /* BlockingOverlayView.swift in Sources */,
+				A25B6E5ACDFB18D2AEB9A35B /* ClipboardGuard.swift in Sources */,
+				08667EB5A0C5C34A3ED82804 /* ClipboardGuardView.swift in Sources */,
+				E06B5CB7734206482B84A8D4 /* CloudKitManager.swift in Sources */,
+				E13029DB3A33CCF782AC757E /* CryptoHelper.swift in Sources */,
+				02474A0EBAA78A32CBE86667 /* FileLockerManager.swift in Sources */,
+				4CB9949DF987A305F7544498 /* FileLockerView.swift in Sources */,
+				0B29D22425A61C99EEEF63A4 /* InactivityMonitor.swift in Sources */,
+				12E55AFB0BC02EBF8D685C36 /* IntruderManager.swift in Sources */,
+				59EA0CA9FAE47A37AC57DA20 /* MacAppLockerApp.swift in Sources */,
+				2C6ED58D4415801F1BBD7CB8 /* MacContentView.swift in Sources */,
+				5052084E63AC4A2934AF5C78 /* Models.swift in Sources */,
+				B174D47DE78AF71ECAC498F2 /* NetworkMonitor.swift in Sources */,
+				3FEC782EE1CCE50591C6EF58 /* NetworkMonitorView.swift in Sources */,
+				1F7FFF241E92F50402B69DED /* NotificationManager.swift in Sources */,
+				D2576936A6F17F48955ADBA3 /* PBKDF2Helper.swift in Sources */,
+				AC8D2D3E4D6CA110BED9FF31 /* ScreenPrivacyManager.swift in Sources */,
+				C16964F3C225621F95192276 /* ScreenPrivacyView.swift in Sources */,
+				5788CAB1C912EA30E50902FC /* SecureNotesManager.swift in Sources */,
+				837440CABC4F8D6EC4DD3954 /* SecureNotesView.swift in Sources */,
+				C24FE8F1CC6AEB9DB685878D /* VaultManager.swift in Sources */,
+				9BF4C36E7F69548779D98B4C /* VaultView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		39DF8C8FAB9EDBB6108AE99A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = SupportingFiles/macOS/AppLocker.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = SWIFT_PACKAGE;
+				INFOPLIST_FILE = SupportingFiles/macOS/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				OTHER_SWIFT_FLAGS = "-DSWIFT_PACKAGE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.mirxa.AppLocker;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		87608286E422C55091A829B1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = SupportingFiles/macOS/AppLocker.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = SWIFT_PACKAGE;
+				INFOPLIST_FILE = SupportingFiles/macOS/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				OTHER_SWIFT_FLAGS = "-DSWIFT_PACKAGE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.mirxa.AppLocker;
+				SDKROOT = macosx;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		BE31C2EFB3738F47EF6FD99E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = SupportingFiles/iOS/AppLockerCompanion.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEAD_CODE_STRIPPING = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = SWIFT_PACKAGE;
+				INFOPLIST_FILE = SupportingFiles/iOS/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				OTHER_SWIFT_FLAGS = "-DSWIFT_PACKAGE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.mirxa.AppLocker.Companion;
+				SDKROOT = iphoneos;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		CF49C63E6ABA3C54264FDC1D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 3.1;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		D691393A890ECAF169F27C11 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = SupportingFiles/iOS/AppLockerCompanion.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GCC_PREPROCESSOR_DEFINITIONS = SWIFT_PACKAGE;
+				INFOPLIST_FILE = SupportingFiles/iOS/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				OTHER_SWIFT_FLAGS = "-DSWIFT_PACKAGE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.mirxa.AppLocker.Companion;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		F71E76325D88D0F1AE5EC405 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 3.1;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1FBF199B040279E653FEC2E1 /* Build configuration list for PBXNativeTarget "AppLockerCompanion" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D691393A890ECAF169F27C11 /* Debug */,
+				BE31C2EFB3738F47EF6FD99E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A6A8C1B754898942F8811D6C /* Build configuration list for PBXProject "AppLocker" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CF49C63E6ABA3C54264FDC1D /* Debug */,
+				F71E76325D88D0F1AE5EC405 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		AAE4AD402ACAD86ED00854F3 /* Build configuration list for PBXNativeTarget "AppLocker" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				39DF8C8FAB9EDBB6108AE99A /* Debug */,
+				87608286E422C55091A829B1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A8932C059C5524D8EEE5AB31 /* Project object */;
+}

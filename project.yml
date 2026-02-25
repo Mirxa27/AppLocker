@@ -1,0 +1,109 @@
+name: AppLocker
+
+options:
+  bundleIdPrefix: com.mirxa
+  deploymentTarget:
+    macOS: "13.0"
+    iOS: "16.0"
+  xcodeVersion: "16.0"
+  createIntermediateGroups: true
+  defaultConfig: Debug
+
+configs:
+  Debug: debug
+  Release: release
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "3.1"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: ""   # Fill in your Team ID
+
+targets:
+
+  # ─────────────────────────────────────────────
+  # macOS — main security app
+  # ─────────────────────────────────────────────
+  AppLocker:
+    type: application
+    platform: macOS
+    deploymentTarget: "13.0"
+
+    sources:
+      - path: Sources/AppLocker
+        excludes:
+          - iOS/**         # iOS-only entry point and views
+        buildPhase: sources
+
+    info:
+      path: SupportingFiles/macOS/Info.plist
+
+    entitlements:
+      path: SupportingFiles/macOS/AppLocker.entitlements
+
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mirxa.AppLocker
+        INFOPLIST_FILE: SupportingFiles/macOS/Info.plist
+        CODE_SIGN_ENTITLEMENTS: SupportingFiles/macOS/AppLocker.entitlements
+        ENABLE_HARDENED_RUNTIME: YES
+        GCC_PREPROCESSOR_DEFINITIONS: SWIFT_PACKAGE
+        OTHER_SWIFT_FLAGS: -DSWIFT_PACKAGE
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      configs:
+        Release:
+          SWIFT_OPTIMIZATION_LEVEL: "-O"
+          DEAD_CODE_STRIPPING: YES
+
+    capabilities:
+      iCloud:
+        cloudKitServices: [CloudKit]
+        containers:
+          - iCloud.com.mirxa.AppLocker
+      push: {}
+
+  # ─────────────────────────────────────────────
+  # iOS — companion app
+  # ─────────────────────────────────────────────
+  AppLockerCompanion:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+
+    sources:
+      - path: Sources/AppLocker/iOS
+        buildPhase: sources
+      - path: Sources/AppLocker/Shared
+        buildPhase: sources
+      - path: Sources/AppLocker/NotificationManager.swift
+        buildPhase: sources
+
+    info:
+      path: SupportingFiles/iOS/Info.plist
+
+    entitlements:
+      path: SupportingFiles/iOS/AppLockerCompanion.entitlements
+
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mirxa.AppLocker.Companion
+        INFOPLIST_FILE: SupportingFiles/iOS/Info.plist
+        CODE_SIGN_ENTITLEMENTS: SupportingFiles/iOS/AppLockerCompanion.entitlements
+        GCC_PREPROCESSOR_DEFINITIONS: SWIFT_PACKAGE
+        OTHER_SWIFT_FLAGS: -DSWIFT_PACKAGE
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1,2"   # iPhone + iPad
+      configs:
+        Release:
+          SWIFT_OPTIMIZATION_LEVEL: "-O"
+          DEAD_CODE_STRIPPING: YES
+
+    capabilities:
+      iCloud:
+        cloudKitServices: [CloudKit]
+        containers:
+          - iCloud.com.mirxa.AppLocker
+      push: {}
+      backgroundModes:
+        modes: [remoteNotification, fetch]
