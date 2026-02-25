@@ -1,6 +1,22 @@
 import Foundation
 import SwiftUI
 
+// MARK: - Installed App Info (for browsing)
+struct InstalledAppInfo: Identifiable, Hashable {
+    var id: String { bundleID }
+    let bundleID: String
+    let displayName: String
+    let path: String
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(bundleID)
+    }
+
+    static func == (lhs: InstalledAppInfo, rhs: InstalledAppInfo) -> Bool {
+        lhs.bundleID == rhs.bundleID
+    }
+}
+
 // MARK: - Locked App Info
 struct LockedAppInfo: Codable, Identifiable, Hashable {
     var id: String { bundleID }
@@ -174,4 +190,56 @@ struct RemoteCommand: Codable {
     let bundleID: String?
     let sourceDevice: String
     let timestamp: Date
+}
+
+// MARK: - Vault
+
+struct VaultFile: Codable, Identifiable {
+    let id: UUID
+    let originalName: String
+    let encryptedFilename: String   // UUID string, no extension, stored in vault dir
+    let fileSize: Int               // original plaintext size in bytes
+    let dateAdded: Date
+    let fileExtension: String       // e.g. "pdf", "png"
+}
+
+// MARK: - File Locker
+
+struct LockedFileRecord: Codable, Identifiable {
+    let id: UUID
+    let originalPath: String        // where the original was before encryption
+    let lockedPath: String          // current .aplk path
+    let dateEncrypted: Date
+}
+
+// MARK: - Clipboard Guard
+
+struct ClipboardEvent: Identifiable {
+    let id = UUID()
+    let timestamp: Date
+    let estimatedCharCount: Int     // approximate, not the actual content
+}
+
+// MARK: - Network Monitor
+
+struct NetworkConnection: Identifiable {
+    var id = UUID()
+    let processName: String
+    let pid: Int32
+    let remoteIP: String
+    let remotePort: String
+    var remoteOrg: String           // populated asynchronously via whois
+    let localAddress: String
+    let proto: String               // "TCP" / "UDP"
+    let state: String               // "ESTABLISHED" / "LISTEN" / etc.
+}
+
+// MARK: - Secure Notes
+
+struct EncryptedNote: Codable, Identifiable {
+    let id: UUID
+    var title: String
+    var encryptedBody: Data         // AES-GCM combined (nonce + ciphertext + tag)
+    let createdAt: Date
+    var modifiedAt: Date
 }
