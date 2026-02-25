@@ -84,7 +84,10 @@ enum CryptoHelper {
             kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         ]
         SecItemDelete(query as CFDictionary)
-        SecItemAdd(query as CFDictionary, nil)
+        let status = SecItemAdd(query as CFDictionary, nil)
+        if status != errSecSuccess {
+            print("AppLocker CryptoHelper: failed to save salt '\(key)' to Keychain, status: \(status)")
+        }
     }
 
     static func loadSaltFromKeychain(key: String) -> Data? {
@@ -115,18 +118,28 @@ enum CryptoHelper {
     static func secureDelete(url: URL) {
         guard let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
               let size = attrs[.size] as? Int,
+              size > 0,
               let fh = try? FileHandle(forWritingTo: url) else {
             try? FileManager.default.removeItem(at: url)
             return
         }
-        let chunkSize = 65536
-        let zeros = Data(repeating: 0, count: min(size, chunkSize))
-        var written = 0
-        while written < size {
-            fh.write(zeros)
-            written += zeros.count
+        // Truncate to 0 and re-write zeros — simplest correct approach
+        do {
+            try fh.truncate(atOffset: 0)
+            let chunkSize = 65536
+            let zeros = Data(repeating: 0, count: min(size, chunkSize))
+            var written = 0
+            while written < size {
+                let remaining = size - written
+                let toWrite = remaining < chunkSize ? Data(repeating: 0, count: remaining) : zeros
+                try fh.write(contentsOf: toWrite)
+                written += toWrite.count
+            }
+            try fh.synchronize()
+            try fh.close()
+        } catch {
+            try? fh.close()
         }
-        try? fh.close()
         try? FileManager.default.removeItem(at: url)
     }
 }

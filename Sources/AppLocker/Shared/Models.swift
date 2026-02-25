@@ -214,8 +214,8 @@ struct LockedFileRecord: Codable, Identifiable {
 
 // MARK: - Clipboard Guard
 
-struct ClipboardEvent: Identifiable {
-    let id = UUID()
+struct ClipboardEvent: Codable, Identifiable {
+    var id: UUID = UUID()
     let timestamp: Date
     let estimatedCharCount: Int     // approximate, not the actual content
 }
@@ -223,7 +223,7 @@ struct ClipboardEvent: Identifiable {
 // MARK: - Network Monitor
 
 struct NetworkConnection: Identifiable {
-    var id = UUID()
+    var id: String { "\(pid)-\(remoteIP):\(remotePort)-\(proto)" }
     let processName: String
     let pid: Int32
     let remoteIP: String
