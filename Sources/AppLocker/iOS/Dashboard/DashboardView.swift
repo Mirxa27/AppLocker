@@ -1,55 +1,49 @@
+// Sources/AppLocker/iOS/Dashboard/DashboardView.swift
 #if os(iOS)
 import SwiftUI
-import CloudKit
-
-@MainActor
-class DashboardViewModel: ObservableObject {
-    @Published var deviceRecords: [CKRecord] = []
-    @Published var recentAlerts:  [CKRecord] = []
-    @Published var isLoading = false
-    @Published var error: String?
-
-    func refresh() {
-        isLoading = true; error = nil
-        Task {
-            do {
-                async let lists  = CloudKitManager.shared.fetchLockedAppLists()
-                async let alerts = CloudKitManager.shared.fetchBlockedEvents(limit: 5)
-                deviceRecords = try await lists
-                recentAlerts  = try await alerts
-            } catch { self.error = error.localizedDescription }
-            isLoading = false
-        }
-    }
-}
 
 struct DashboardView: View {
-    @StateObject private var vm = DashboardViewModel()
-    @ObservedObject private var ck = CloudKitManager.shared
+    @ObservedObject private var kv         = KVStoreManager.shared
+    @ObservedObject private var protection = AppProtectionManager.shared
 
     var body: some View {
         NavigationStack {
             List {
-                Section("iCloud Status") {
-                    Label(
-                        ck.iCloudAvailable ? "Connected" : "Not signed in to iCloud",
-                        systemImage: ck.iCloudAvailable ? "icloud.fill" : "icloud.slash"
-                    )
-                    .foregroundColor(ck.iCloudAvailable ? .green : .orange)
+                Section("Mac Device") {
+                    if let device = kv.lastMacDevice {
+                        HStack {
+                            Image(systemName: "desktopcomputer").foregroundColor(.blue)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(device).font(.headline)
+                                if let sync = kv.lastSyncTime {
+                                    Text("Last seen \(sync.formatted(.relative(presentation: .named)))")
+                                        .font(.caption).foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                        HStack {
+                            Image(systemName: "lock.app.dashed").foregroundColor(.orange)
+                            Text("\(kv.lockedApps.count) app\(kv.lockedApps.count == 1 ? "" : "s") locked")
+                                .font(.subheadline)
+                        }
+                    } else {
+                        Label("No Mac connected — open AppLocker on your Mac",
+                              systemImage: "desktopcomputer.trianglebadge.exclamationmark")
+                            .font(.caption).foregroundColor(.secondary)
+                    }
                 }
 
-                Section("Mac Devices") {
-                    if vm.deviceRecords.isEmpty {
-                        Text("No Mac found — open AppLocker on your Mac first")
-                            .foregroundColor(.secondary).font(.caption)
+                Section("Recent Blocks") {
+                    let recent = Array(kv.alertHistory.filter { $0.type.contains("block") }.prefix(5))
+                    if recent.isEmpty {
+                        Text("No recent blocks").foregroundColor(.secondary).font(.caption)
                     } else {
-                        ForEach(vm.deviceRecords, id: \.recordID) { rec in
-                            VStack(alignment: .leading, spacing: 4) {
-                                Label(rec["deviceName"] as? String ?? "Mac",
-                                      systemImage: "desktopcomputer")
-                                    .font(.headline)
-                                if let date = rec["updatedAt"] as? Date {
-                                    Text("Synced \(date.formatted(.relative(presentation: .named)))")
+                        ForEach(recent) { alert in
+                            HStack {
+                                Image(systemName: "hand.raised.fill").foregroundColor(.orange)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(alert.appName).font(.subheadline)
+                                    Text(alert.timestamp.formatted(.relative(presentation: .named)))
                                         .font(.caption).foregroundColor(.secondary)
                                 }
                             }
@@ -57,34 +51,25 @@ struct DashboardView: View {
                     }
                 }
 
-                Section("Recent Blocks") {
-                    if vm.recentAlerts.isEmpty {
-                        Text("No recent events").foregroundColor(.secondary).font(.caption)
-                    } else {
-                        ForEach(vm.recentAlerts, id: \.recordID) { rec in
-                            HStack {
-                                Image(systemName: "hand.raised.fill").foregroundColor(.orange)
-                                VStack(alignment: .leading) {
-                                    Text(rec["appName"] as? String ?? "Unknown")
-                                        .font(.subheadline)
-                                    if let ts = rec["timestamp"] as? Date {
-                                        Text(ts.formatted(.relative(presentation: .named)))
-                                            .font(.caption).foregroundColor(.secondary)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                Section("iOS Security") {
+                    Label(
+                        protection.isJailbroken ? "Jailbreak detected!" : "Device integrity OK",
+                        systemImage: protection.isJailbroken ? "exclamationmark.triangle.fill" : "checkmark.shield.fill"
+                    ).foregroundColor(protection.isJailbroken ? .red : .green)
 
-                if let err = vm.error {
-                    Section { Text(err).foregroundColor(.red).font(.caption) }
+                    Label(
+                        protection.isPINSet() ? "PIN protection enabled" : "No PIN set",
+                        systemImage: protection.isPINSet() ? "lock.fill" : "lock.slash"
+                    ).foregroundColor(protection.isPINSet() ? .green : .orange)
+
+                    Label(
+                        protection.isScreenRecording ? "Screen recording active!" : "Screen not recorded",
+                        systemImage: protection.isScreenRecording ? "eye.trianglebadge.exclamationmark" : "eye.slash"
+                    ).foregroundColor(protection.isScreenRecording ? .red : .secondary)
                 }
             }
             .navigationTitle("Dashboard")
-            .refreshable { vm.refresh() }
-            .task { vm.refresh() }
-            .overlay(vm.isLoading ? ProgressView() : nil)
+            .refreshable { kv.decodeAllKeys() }
         }
     }
 }
