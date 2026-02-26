@@ -1,90 +1,83 @@
+// Sources/AppLocker/iOS/Alerts/AlertsView.swift
 #if os(iOS)
 import SwiftUI
-import CloudKit
 
-enum AlertEventType: String, CaseIterable, Identifiable {
+enum AlertFilter: String, CaseIterable, Identifiable {
     var id: Self { self }
-    case all      = "All"
-    case blocked  = "Blocked"
-    case failed   = "Failed Auth"
-}
-
-@MainActor
-class AlertsViewModel: ObservableObject {
-    @Published var records: [CKRecord] = []
-    @Published var filter   = AlertEventType.all
-    @Published var isLoading = false
-
-    var filtered: [CKRecord] {
-        switch filter {
-        case .all:     return records
-        case .blocked: return records.filter { $0.recordType == "BlockedAppEvent" }
-        case .failed:  return records.filter { $0.recordType == "FailedAuthEvent" }
-        }
-    }
-
-    func refresh() {
-        isLoading = true
-        Task {
-            async let blocked = CloudKitManager.shared.fetchBlockedEvents()
-            async let failed  = CloudKitManager.shared.fetchFailedAuthEvents()
-            let all = ((try? await blocked) ?? []) + ((try? await failed) ?? [])
-            records = all.sorted {
-                ($0["timestamp"] as? Date ?? .distantPast) >
-                ($1["timestamp"] as? Date ?? .distantPast)
-            }
-            isLoading = false
-        }
-    }
+    case all     = "All"
+    case blocked = "Blocked"
+    case failed  = "Failed Auth"
 }
 
 struct AlertsView: View {
-    @StateObject private var vm = AlertsViewModel()
+    @ObservedObject private var kv = KVStoreManager.shared
+    @State private var filter: AlertFilter = .all
+
+    var filtered: [AlertRecord] {
+        switch filter {
+        case .all:     return kv.alertHistory
+        case .blocked: return kv.alertHistory.filter { $0.type.contains("block") }
+        case .failed:  return kv.alertHistory.filter { $0.type.contains("fail") }
+        }
+    }
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                Picker("Filter", selection: $vm.filter) {
-                    ForEach(AlertEventType.allCases) { t in Text(t.rawValue).tag(t) }
+                Picker("Filter", selection: $filter) {
+                    ForEach(AlertFilter.allCases) { f in Text(f.rawValue).tag(f) }
                 }
-                .pickerStyle(.segmented).padding(.horizontal)
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
+                .padding(.vertical, 8)
 
-                List(vm.filtered, id: \.recordID) { rec in AlertRowView(record: rec) }
-                    .overlay(vm.isLoading ? ProgressView() : nil)
-                    .overlay(
-                        !vm.isLoading && vm.filtered.isEmpty
-                            ? Text("No alerts").foregroundColor(.secondary) : nil
-                    )
+                if filtered.isEmpty {
+                    VStack(spacing: 16) {
+                        Spacer()
+                        Image(systemName: "bell.slash")
+                            .font(.system(size: 48)).foregroundColor(.secondary)
+                        Text("No Alerts").font(.title2).foregroundColor(.secondary)
+                        Text("Alerts appear here when your Mac blocks an app.")
+                            .font(.caption).foregroundColor(.secondary).multilineTextAlignment(.center)
+                        Spacer()
+                    }
+                } else {
+                    List(filtered) { alert in
+                        AlertRecordRow(alert: alert)
+                    }
+                }
             }
             .navigationTitle("Alerts")
             .toolbar {
-                Button(action: vm.refresh) { Image(systemName: "arrow.clockwise") }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { kv.decodeAllKeys() } label: { Image(systemName: "arrow.clockwise") }
+                }
+                if !kv.alertHistory.isEmpty {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Clear") { kv.clearHistory() }
+                    }
+                }
             }
-            .refreshable { vm.refresh() }
-            .task { vm.refresh() }
+            .refreshable { kv.decodeAllKeys() }
         }
     }
 }
 
-struct AlertRowView: View {
-    let record: CKRecord
-    var isFailed: Bool { record.recordType == "FailedAuthEvent" }
+struct AlertRecordRow: View {
+    let alert: AlertRecord
+    var isFailed: Bool { alert.type.contains("fail") }
 
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: isFailed ? "exclamationmark.triangle.fill" : "hand.raised.fill")
-                .foregroundColor(isFailed ? .red : .orange)
-                .font(.title3)
+                .foregroundColor(isFailed ? .red : .orange).font(.title3)
             VStack(alignment: .leading, spacing: 3) {
-                Text(record["appName"] as? String ?? "Unknown").font(.headline)
-                Text(record["deviceName"] as? String ?? "")
-                    .font(.caption).foregroundColor(.secondary)
+                Text(alert.appName).font(.headline)
+                Text(alert.deviceName).font(.caption).foregroundColor(.secondary)
             }
             Spacer()
-            if let ts = record["timestamp"] as? Date {
-                Text(ts.formatted(date: .omitted, time: .shortened))
-                    .font(.caption2).foregroundColor(.secondary)
-            }
+            Text(alert.timestamp.formatted(date: .omitted, time: .shortened))
+                .font(.caption2).foregroundColor(.secondary)
         }
         .padding(.vertical, 4)
     }
