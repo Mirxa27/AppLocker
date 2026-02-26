@@ -10,12 +10,6 @@ import UserNotifications
 struct MacAppLockerApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
-    init() {
-        // Set accessory policy immediately — before WindowGroup registers with the
-        // window server. This prevents any Dock icon or bounce on launch.
-        NSApp.setActivationPolicy(.accessory)
-    }
-
     var body: some Scene {
         WindowGroup {
             MacContentView()
@@ -41,16 +35,32 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
     var statusItem: NSStatusItem?
     private var isQuitAuthInProgress = false
 
+    // @NSApplicationDelegateAdaptor creates the delegate from a non-isolated context.
+    // nonisolated init() lets it do so without a main-actor isolation crash in release builds.
+    nonisolated override init() {
+        super.init()
+    }
+
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        // Earliest safe point to hide from Dock — fires before any window is
+        // presented to the window server, preventing any Dock bounce.
+        NSApp.setActivationPolicy(.accessory)
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         #if !DEBUG
         applyAntiDebugger()
         #endif
-        // Set up notification delegate
-        UNUserNotificationCenter.current().delegate = self
+
+        // UNUserNotificationCenter requires a bundle identifier.
+        // Guard so the app doesn't crash when launched as a raw binary during development.
+        if Bundle.main.bundleIdentifier != nil {
+            UNUserNotificationCenter.current().delegate = self
+            NotificationManager.shared.requestNotificationPermissions()
+        }
 
         // Request permissions
         AppMonitor.shared.requestAccessibilityPermissions()
-        NotificationManager.shared.requestNotificationPermissions()
 
         // Set up menu bar icon
         setupMenuBar()
@@ -75,6 +85,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
             name: NSWindow.didBecomeKeyNotification,
             object: nil
         )
+
+        // The app uses .accessory policy (no Dock icon), so SwiftUI's window won't
+        // activate automatically. Bring the main window to front explicitly so the
+        // user sees the setup wizard or lock screen on launch.
+        DispatchQueue.main.async {
+            NSApp.activate(ignoringOtherApps: true)
+            if let window = NSApp.windows.first(where: { !($0 is NSPanel) }) {
+                window.makeKeyAndOrderFront(nil)
+            }
+        }
     }
 
     // MARK: - Anti-Debugger
@@ -212,8 +232,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
     
     @objc func openApp() {
         NSApp.activate(ignoringOtherApps: true)
-        if let window = NSApp.windows.first {
+        if let window = NSApp.windows.first(where: { !($0 is NSPanel) }) {
             window.makeKeyAndOrderFront(nil)
+        } else {
+            // Window was fully closed — re-open via the scene
+            for window in NSApp.windows { window.makeKeyAndOrderFront(nil) }
         }
     }
     
