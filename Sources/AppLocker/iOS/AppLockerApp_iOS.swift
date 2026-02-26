@@ -19,8 +19,8 @@ class iOSAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterD
                      didFinishLaunchingWithOptions opts: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
         NotificationManager.shared.requestNotificationPermissions()
-        CloudKitManager.shared.setupPushSubscriptions()
         NSUbiquitousKeyValueStore.default.synchronize()
+        Task { @MainActor in KVStoreManager.shared.decodeAllKeys() }
         return true
     }
 
