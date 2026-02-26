@@ -33,6 +33,12 @@ class SecureNotesManager: ObservableObject {
             isUnlocked = true
             lastError = nil
             loadNotes()
+            // Sync salt to iCloud KV so iOS companion can derive the same notes key
+            NSUbiquitousKeyValueStore.default.set(
+                salt.base64EncodedString(),
+                forKey: "com.applocker.notesSalt"
+            )
+            NSUbiquitousKeyValueStore.default.synchronize()
             return true
         } catch {
             lastError = error.localizedDescription; return false
@@ -90,11 +96,17 @@ class SecureNotesManager: ObservableObject {
         notes = decoded.sorted { $0.modifiedAt > $1.modifiedAt }
     }
 
-    private func saveNotes() {
+    func saveNotes() {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         if let data = try? encoder.encode(notes) {
             try? data.write(to: notesFileURL)
+            // Sync encrypted notes to iCloud KV for iOS companion (read-only on iOS)
+            NSUbiquitousKeyValueStore.default.set(
+                data.base64EncodedString(),
+                forKey: "com.applocker.encryptedNotes"
+            )
+            NSUbiquitousKeyValueStore.default.synchronize()
         }
     }
 }

@@ -688,8 +688,13 @@ class AppMonitor: ObservableObject {
     private func saveLockedApps() {
         if let data = try? JSONEncoder().encode(lockedApps) {
             UserDefaults.standard.set(data, forKey: lockedAppsKey)
+            // Sync to iCloud KV so iOS companion can read the locked app list
+            NSUbiquitousKeyValueStore.default.set(
+                data.base64EncodedString(),
+                forKey: "com.applocker.lockedApps"
+            )
+            NSUbiquitousKeyValueStore.default.synchronize()
         }
-        CloudKitManager.shared.syncLockedAppList(lockedApps)
     }
 
     // MARK: - Permissions
