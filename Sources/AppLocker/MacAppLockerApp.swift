@@ -41,12 +41,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
         super.init()
     }
 
-    func applicationWillFinishLaunching(_ notification: Notification) {
-        // Earliest safe point to hide from Dock — fires before any window is
-        // presented to the window server, preventing any Dock bounce.
-        NSApp.setActivationPolicy(.accessory)
-    }
-
     func applicationDidFinishLaunching(_ notification: Notification) {
         #if !DEBUG
         applyAntiDebugger()
