@@ -48,6 +48,7 @@
 		E13029DB3A33CCF782AC757E /* CryptoHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3345518D7FAB7A1B778E13E0 /* CryptoHelper.swift */; };
 		F1CCA0983AE043EF047B4434 /* CloudKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 158137FEAC983C7F20959107 /* CloudKitManager.swift */; };
 		F1FBC3A8A54777B16E0A23E9 /* iOSSecureNotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58EC0CF3A6146E6C01BB25DD /* iOSSecureNotesView.swift */; };
+		525A0A8BF2834620B611963C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B85517469DEC4103B7E91187 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -86,6 +87,7 @@
 		DB8FBE4EB554CC600FF6DDE0 /* VaultManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultManager.swift; sourceTree = "<group>"; };
 		F45A40BE06D632D040111744 /* iOSSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSSettingsView.swift; sourceTree = "<group>"; };
 		F5706467657D7417A4F615BB /* RemoteControlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteControlView.swift; sourceTree = "<group>"; };
+		B85517469DEC4103B7E91187 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -198,6 +200,7 @@
 		ACA3A77C903F68F2D3937DD3 /* AppLocker */ = {
 			isa = PBXGroup;
 			children = (
+				B85517469DEC4103B7E91187 /* Assets.xcassets */,
 				4790B3D849A74237E9C9F6E8 /* AppMonitor.swift */,
 				D52FC0CEF73F80C284DFFED6 /* AuthenticationManager.swift */,
 				0EC7D7A5BA720F58D22A91AA /* MacAppLockerApp.swift */,
@@ -299,6 +302,7 @@
 			buildConfigurationList = 1FBF199B040279E653FEC2E1 /* Build configuration list for PBXNativeTarget "AppLockerCompanion" */;
 			buildPhases = (
 				02ED91286BC6E064EBB7F8FA /* Sources */,
+				184E35BB61444258B51ABE64 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -312,6 +316,17 @@
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
+/* Begin PBXResourcesBuildPhase section */
+		184E35BB61444258B51ABE64 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				525A0A8BF2834620B611963C /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 
 /* Begin PBXProject section */
 		A8932C059C5524D8EEE5AB31 /* Project object */ = {
