@@ -20,7 +20,11 @@ class iOSAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterD
         UNUserNotificationCenter.current().delegate = self
         NotificationManager.shared.requestNotificationPermissions()
         NSUbiquitousKeyValueStore.default.synchronize()
-        Task { @MainActor in KVStoreManager.shared.decodeAllKeys() }
+        Task { @MainActor in
+            KVStoreManager.shared.decodeAllKeys()
+            await CloudKitManager.shared.checkiCloudStatus()
+            CloudKitManager.shared.setupPushSubscriptions()
+        }
         return true
     }
 

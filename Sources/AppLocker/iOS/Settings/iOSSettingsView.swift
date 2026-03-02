@@ -38,6 +38,26 @@ struct iOSSettingsView: View {
                         systemImage: ck.iCloudAvailable ? "icloud.fill" : "icloud.slash"
                     )
                     .foregroundColor(ck.iCloudAvailable ? .green : .orange)
+
+                    if let cloudError = ck.lastSyncError, !cloudError.isEmpty {
+                        Label(cloudError, systemImage: "exclamationmark.icloud")
+                            .font(.caption)
+                            .foregroundColor(.orange)
+                    }
+                }
+
+                Section("Cloud Sync") {
+                    Button {
+                        Task { await ck.checkiCloudStatus() }
+                    } label: {
+                        Label("Refresh iCloud Status", systemImage: "arrow.clockwise.icloud")
+                    }
+
+                    Button {
+                        CloudKitManager.shared.setupPushSubscriptions()
+                    } label: {
+                        Label("Repair Push Subscriptions", systemImage: "bell.badge")
+                    }
                 }
 
                 Section("Session") {
@@ -79,6 +99,7 @@ struct iOSSettingsView: View {
                 }
             }
         }
+        .task { await ck.checkiCloudStatus() }
     }
 
     private var biometricAvailable: Bool {

@@ -694,6 +694,7 @@ class AppMonitor: ObservableObject {
                 forKey: "com.applocker.lockedApps"
             )
             NSUbiquitousKeyValueStore.default.synchronize()
+            CloudKitManager.shared.syncLockedAppList(lockedApps)
         }
     }
 

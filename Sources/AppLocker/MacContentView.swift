@@ -308,6 +308,15 @@ struct MainInterface: View {
 
                     Divider().padding(.vertical, 4)
 
+                    Text("Productivity")
+                        .font(.caption2).foregroundColor(.secondary).padding(.horizontal, 8)
+
+                    SidebarButton(title: "Focus Mode",       icon: "target",                           isSelected: selectedTab == 13) { selectedTab = 13 }
+                    SidebarButton(title: "App Quotas",       icon: "hourglass",                        isSelected: selectedTab == 14) { selectedTab = 14 }
+                    SidebarButton(title: "Schedule Templates", icon: "calendar.badge.clock",             isSelected: selectedTab == 15) { selectedTab = 15 }
+
+                    Divider().padding(.vertical, 4)
+
                     Text("Security Tools")
                         .font(.caption2).foregroundColor(.secondary).padding(.horizontal, 8)
 
@@ -341,6 +350,9 @@ struct MainInterface: View {
                     case 10: ScreenPrivacyView()
                     case 11: NetworkMonitorView()
                     case 12: SecureNotesView()
+                    case 13: FocusModeView()
+                    case 14: AppQuotasView()
+                    case 15: ScheduleTemplatesView()
                     default: Text("Select an option")
                     }
                 }

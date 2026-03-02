@@ -260,6 +260,70 @@ class NotificationManager: ObservableObject {
     }
     #endif
 
+    // MARK: - Quota Notifications
+    
+    func sendQuotaWarningNotification(appName: String, bundleID: String, minutesRemaining: Int) {
+        guard notificationsEnabled else { return }
+        
+        let content = UNMutableNotificationContent()
+        content.title = "⏱️ App Quota Warning"
+        content.body = minutesRemaining > 0
+            ? "You have \(minutesRemaining) minutes left for \(appName) today."
+            : "You've almost reached your daily limit for \(appName)."
+        content.sound = .default
+        
+        let request = UNNotificationRequest(
+            identifier: "quota-warning-\(bundleID)",
+            content: content,
+            trigger: nil
+        )
+        
+        UNUserNotificationCenter.current().add(request)
+    }
+    
+    func sendQuotaExceededNotification(appName: String, bundleID: String) {
+        guard notificationsEnabled else { return }
+        
+        let content = UNMutableNotificationContent()
+        content.title = "🚫 App Quota Exceeded"
+        content.body = "You've reached your daily limit for \(appName). The app has been terminated."
+        content.sound = .defaultCritical
+        content.interruptionLevel = .timeSensitive
+        
+        let request = UNNotificationRequest(
+            identifier: "quota-exceeded-\(bundleID)",
+            content: content,
+            trigger: nil
+        )
+        
+        UNUserNotificationCenter.current().add(request)
+    }
+
+    // MARK: - Focus Mode Notifications
+    
+    func sendFocusModeNotification(profile: String, started: Bool) {
+        guard notificationsEnabled else { return }
+        
+        let content = UNMutableNotificationContent()
+        if started {
+            content.title = "🎯 Focus Mode Started"
+            content.body = "Profile: \(profile). Stay focused!"
+            content.sound = .default
+        } else {
+            content.title = "✅ Focus Mode Ended"
+            content.body = "Great job! Take a moment to rest."
+            content.sound = .default
+        }
+        
+        let request = UNNotificationRequest(
+            identifier: "focus-mode-\(Date().timeIntervalSince1970)",
+            content: content,
+            trigger: nil
+        )
+        
+        UNUserNotificationCenter.current().add(request)
+    }
+
     // MARK: - Remote Commands
 
     func sendRemoteCommand(_ action: RemoteCommand.Action, bundleID: String? = nil) {

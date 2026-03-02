@@ -18,7 +18,7 @@ let package = Package(
             name: "AppLocker",
             dependencies: [],
             path: "Sources/AppLocker",
-            exclude: [],
+            exclude: ["Assets.xcassets"],
             resources: [],
             swiftSettings: [
                 .define("SWIFT_PACKAGE")

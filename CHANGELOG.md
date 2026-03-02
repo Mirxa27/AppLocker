@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Focus Mode** - Pomodoro-style distraction-free work sessions with profiles (Deep Work, Study, Meeting)
+- **App Usage Quotas** - Daily time limits for locked apps with warnings and optional termination
+- **Smart Schedule Templates** - 8 pre-built schedule templates (Work Hours, Evening Wind Down, Study Time, etc.)
+- Enhanced sidebar with new Productivity section
+
 ### Fixed
 
 - Fixed syntax errors in AuthenticationManager.swift (SecRandomCopyBytes buffer parameter)
@@ -18,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated actions/cache to v4 and softprops/action-gh-release to v2
 - Fixed release job to run on ubuntu-latest (no macOS needed for artifact upload)
 - Fixed Makefile version target to not depend on pre-existing app bundle
+- Fixed Package.swift to exclude Assets.xcassets warning
 
 ### Improved
 
@@ -25,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DMG includes Applications symlink for drag-and-drop installation
 - Build workflow generates Info.plist with version from git tag
 - Added proper permissions for GitHub Release creation
+- Enhanced app structure with organized feature folders
 
 ## [3.0.0] - 2025-02-11
 

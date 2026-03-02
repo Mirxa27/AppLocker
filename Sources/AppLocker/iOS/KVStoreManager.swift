@@ -4,6 +4,15 @@ import Foundation
 import SwiftUI
 import CryptoKit
 
+struct AlertRecord: Codable, Identifiable {
+    var id = UUID()
+    let appName: String
+    let bundleID: String
+    let deviceName: String
+    let timestamp: Date
+    let type: String
+}
+
 @MainActor
 class KVStoreManager: ObservableObject {
     static let shared = KVStoreManager()

@@ -4,22 +4,47 @@ A macOS application that lets you lock apps behind a passcode or Touch ID/Face I
 
 ## Features
 
+### Core Security
 - **Passcode Protection** - Securely lock apps with a 4+ digit passcode (SHA-256 hashed with random salt, stored in Keychain)
 - **Biometric Authentication** - Unlock with Touch ID or Face ID (if available)
 - **App Blocking Engine** - Prevents locked apps from opening without authentication (200ms polling + workspace observers)
+- **Escalating Lockout** - Progressive time-based lockout after failed passcode attempts (30s to 1 hour)
+- **Intruder Detection** - Captures photos after 2+ failed unlock attempts
+
+### Scheduling & Productivity
 - **Schedule-Based Locking** - Set time-based rules for when apps should be locked (per-app, with day-of-week support)
-- **Usage Statistics** - Track block counts, unlock counts, and failed attempts per app with time-period filtering
+- **Smart Schedule Templates** - 8 pre-built templates for common patterns (Work Hours, Evening Wind Down, Study Time, etc.)
+- **Focus Mode** - Pomodoro-style distraction-free sessions with profiles (Deep Work, Study, Meeting)
+- **App Usage Quotas** - Daily time limits for locked apps with warnings and optional auto-termination
+
+### Organization & Management
 - **App Categories** - Organize locked apps into groups (Social Media, Games, etc.) for batch management
 - **Configurable Unlock Duration** - Choose how long temporary unlocks last (30s to 1 hour)
-- **Auto-Lock on Sleep** - Automatically re-locks all apps and AppLocker when screen sleeps or lid closes
-- **Escalating Lockout** - Progressive time-based lockout after failed passcode attempts (30s to 1 hour)
+- **Auto-Lock on Sleep** - Automatically re-locks all apps when screen sleeps or lid closes
 - **Change Passcode** - Update your security passcode from Settings
 - **Export/Import Config** - Backup and restore your locked apps, categories, and settings
+- **Full Reset** - Option to wipe all data and start fresh from Settings
+
+### Security Tools
+- **Secure Vault** - AES-256-GCM encrypted file storage with drag-and-drop interface
+- **File Locker** - In-place file encryption with .aplk format
+- **Clipboard Guard** - Auto-clear clipboard after configurable delay
+- **Screen Privacy** - Hide window from screen recordings, auto-lock on recording detection
+- **Network Monitor** - Real-time connection monitoring for locked apps
+- **Secure Notes** - Encrypted note-taking with AES-256-GCM
+
+### Monitoring & Alerts
+- **Usage Statistics** - Track block counts, unlock counts, and failed attempts per app with time-period filtering
 - **Persistent Activity Log** - Logs survive app restarts (up to 500 entries)
 - **Local Notifications** - Get notified when locked apps are accessed, with action buttons
 - **Cross-Device Alerts** - Sync security alerts via iCloud to your other Apple devices
 - **Menu Bar Integration** - Quick access from the macOS status bar
-- **Full Reset** - Option to wipe all data and start fresh from Settings
+
+### iOS Companion
+- **Remote Control** - Lock/unlock apps from your iPhone/iPad
+- **Dashboard** - View Mac device status and recent blocks
+- **Secure Notes Sync** - Read encrypted notes synced from Mac
+- **Alerts History** - View all security events from your Mac
 
 ## How to Use
 
