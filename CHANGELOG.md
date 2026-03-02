@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.6.0] - 2026-03-02
+
+### Changed
+
+- **Restored Original App Icons** - Reverted to the classic icon set with standard naming convention
+- Cleaned up iPad-specific icon duplicates for consistent asset management
+
+### Fixed
+
+- Icon asset catalog structure simplified for better maintainability
+
+## [3.1.0] - 2026-03-02
+
 ### Added
 
 - **Focus Mode** - Pomodoro-style distraction-free work sessions with profiles (Deep Work, Study, Meeting)

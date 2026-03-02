@@ -11,6 +11,7 @@
 		08667EB5A0C5C34A3ED82804 /* ClipboardGuardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4E39D87CA8ED61D8CEBEA3F /* ClipboardGuardView.swift */; };
 		097A74D9D47DF5DBEC11132F /* PBKDF2Helper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7D05A166D18E025ACDEDA20 /* PBKDF2Helper.swift */; };
 		0B29D22425A61C99EEEF63A4 /* InactivityMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8ECBD2FB336E1BB777C270C5 /* InactivityMonitor.swift */; };
+		0B7CB975DCBA36CE5A19A79B /* AppQuotaManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B733CA47117AB034CEC0D370 /* AppQuotaManager.swift */; };
 		12A810A5048085C098BBC0F6 /* InactivityMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8ECBD2FB336E1BB777C270C5 /* InactivityMonitor.swift */; };
 		12E55AFB0BC02EBF8D685C36 /* IntruderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0ECCB73AB5F53C4DE4B62CF /* IntruderManager.swift */; };
 		1878DB288A76C6246119AB73 /* CryptoHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3345518D7FAB7A1B778E13E0 /* CryptoHelper.swift */; };
@@ -22,6 +23,7 @@
 		36D6CF705E75C28F81CFA42B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A43A52D75427A122F909DC93 /* Assets.xcassets */; };
 		3ABFB4C80ADCC6FB963E8BA8 /* IntruderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0ECCB73AB5F53C4DE4B62CF /* IntruderManager.swift */; };
 		3FEC782EE1CCE50591C6EF58 /* NetworkMonitorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17A731B3BD187F11BACABBDB /* NetworkMonitorView.swift */; };
+		473C404CC37ADDCE8AA56ACA /* FocusModeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADA759CE912AA43A727E1320 /* FocusModeManager.swift */; };
 		4CB9949DF987A305F7544498 /* FileLockerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01D92375103E41F760E0B3B5 /* FileLockerView.swift */; };
 		4E13096445370FFF8ACCC0EB /* AppLockerApp_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9637AFA612BEAFE89DF5C4B /* AppLockerApp_iOS.swift */; };
 		4E5590B48E8922194440DC6B /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A932A9C64198B92A0E70FE6 /* NotificationManager.swift */; };
@@ -31,17 +33,21 @@
 		59EA0CA9FAE47A37AC57DA20 /* MacAppLockerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EC7D7A5BA720F58D22A91AA /* MacAppLockerApp.swift */; };
 		6D2954A7294652FFD921A825 /* KVStoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F909861232ADCC5C92170855 /* KVStoreManager.swift */; };
 		75E6436284E9AAEE50F34794 /* BlockingOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3426A7D3410EE564D1F72BF /* BlockingOverlayView.swift */; };
+		771D9747033FDB57A8E8E3AA /* FocusModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AF35C0E801A018A83F9EF98 /* FocusModeView.swift */; };
 		7A65D5299B62348177C82CC5 /* iOSContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AC456C3128977EBC38C9B21 /* iOSContentView.swift */; };
 		7DFC7E7C980821E534639871 /* AuthenticationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D52FC0CEF73F80C284DFFED6 /* AuthenticationManager.swift */; };
 		837440CABC4F8D6EC4DD3954 /* SecureNotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70102F83B656C5B3A0C95472 /* SecureNotesView.swift */; };
 		84ABBCC2EFF83E5301080711 /* AppMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4790B3D849A74237E9C9F6E8 /* AppMonitor.swift */; };
 		8BD9853F833133355953772A /* iOSIntruderPhotosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E43A26EEC5B37F0E1C08F26 /* iOSIntruderPhotosView.swift */; };
+		8D56BF1CE393830C7D465725 /* AppQuotasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBBB3E6B05FEA3327A41B98A /* AppQuotasView.swift */; };
+		9A8313800C34F366758B818D /* ScheduleTemplateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B13E51D9D717379279F5F2A /* ScheduleTemplateManager.swift */; };
 		9BF4C36E7F69548779D98B4C /* VaultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6761502D80BEC8DBE1AA4AE2 /* VaultView.swift */; };
 		A0C18AC3CC493CCC78891C8E /* AlertsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 843337CB44E71F8A232EEC62 /* AlertsView.swift */; };
 		A25B6E5ACDFB18D2AEB9A35B /* ClipboardGuard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AF938CEDB043C385C353BBF /* ClipboardGuard.swift */; };
 		A4613D2CCFE60C662F0CC134 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13432AF2DB2DFC29066FB236 /* Models.swift */; };
 		AC8D2D3E4D6CA110BED9FF31 /* ScreenPrivacyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEF5F7239765CAF590A4C91B /* ScreenPrivacyManager.swift */; };
 		B174D47DE78AF71ECAC498F2 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 926AB1334A90C00642975611 /* NetworkMonitor.swift */; };
+		B765712C3C4E9E58BDA067E2 /* ScheduleTemplatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DC033B29BD06DBD0351AA1F /* ScheduleTemplatesView.swift */; };
 		C16964F3C225621F95192276 /* ScreenPrivacyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D57909D5B5F7462A2B88FEE8 /* ScreenPrivacyView.swift */; };
 		C24FE8F1CC6AEB9DB685878D /* VaultManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB8FBE4EB554CC600FF6DDE0 /* VaultManager.swift */; };
 		CEDAA298E28B5383129C8C31 /* RemoteControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5706467657D7417A4F615BB /* RemoteControlView.swift */; };
@@ -61,6 +67,7 @@
 		158137FEAC983C7F20959107 /* CloudKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitManager.swift; sourceTree = "<group>"; };
 		177EF647462EB2FD9277E581 /* AppProtectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppProtectionManager.swift; sourceTree = "<group>"; };
 		17A731B3BD187F11BACABBDB /* NetworkMonitorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitorView.swift; sourceTree = "<group>"; };
+		1B13E51D9D717379279F5F2A /* ScheduleTemplateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleTemplateManager.swift; sourceTree = "<group>"; };
 		1E43A26EEC5B37F0E1C08F26 /* iOSIntruderPhotosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSIntruderPhotosView.swift; sourceTree = "<group>"; };
 		3345518D7FAB7A1B778E13E0 /* CryptoHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CryptoHelper.swift; sourceTree = "<group>"; };
 		3552440740293B5C0BE39957 /* MacContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacContentView.swift; sourceTree = "<group>"; };
@@ -69,15 +76,19 @@
 		6761502D80BEC8DBE1AA4AE2 /* VaultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultView.swift; sourceTree = "<group>"; };
 		6AC456C3128977EBC38C9B21 /* iOSContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSContentView.swift; sourceTree = "<group>"; };
 		6C66F2C2D536D29202AB3B23 /* AppLocker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AppLocker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6DC033B29BD06DBD0351AA1F /* ScheduleTemplatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleTemplatesView.swift; sourceTree = "<group>"; };
 		70102F83B656C5B3A0C95472 /* SecureNotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureNotesView.swift; sourceTree = "<group>"; };
 		843337CB44E71F8A232EEC62 /* AlertsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertsView.swift; sourceTree = "<group>"; };
 		8931D2B844481366D713C2E6 /* SecureNotesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureNotesManager.swift; sourceTree = "<group>"; };
 		8ECBD2FB336E1BB777C270C5 /* InactivityMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InactivityMonitor.swift; sourceTree = "<group>"; };
 		926AB1334A90C00642975611 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
 		9A932A9C64198B92A0E70FE6 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		9AF35C0E801A018A83F9EF98 /* FocusModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusModeView.swift; sourceTree = "<group>"; };
 		A3426A7D3410EE564D1F72BF /* BlockingOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockingOverlayView.swift; sourceTree = "<group>"; };
 		A43A52D75427A122F909DC93 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A4F0F46A17D052502C37117F /* AppLockerCompanion.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = AppLockerCompanion.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		ADA759CE912AA43A727E1320 /* FocusModeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusModeManager.swift; sourceTree = "<group>"; };
+		B733CA47117AB034CEC0D370 /* AppQuotaManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppQuotaManager.swift; sourceTree = "<group>"; };
 		BEF5F7239765CAF590A4C91B /* ScreenPrivacyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenPrivacyManager.swift; sourceTree = "<group>"; };
 		C0ECCB73AB5F53C4DE4B62CF /* IntruderManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntruderManager.swift; sourceTree = "<group>"; };
 		C4E39D87CA8ED61D8CEBEA3F /* ClipboardGuardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardGuardView.swift; sourceTree = "<group>"; };
@@ -88,6 +99,7 @@
 		D6D26B3C88DAE3BEEF3F057E /* FileLockerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileLockerManager.swift; sourceTree = "<group>"; };
 		DB7FA2E3AAB49C2B9AED67AD /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		DB8FBE4EB554CC600FF6DDE0 /* VaultManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultManager.swift; sourceTree = "<group>"; };
+		EBBB3E6B05FEA3327A41B98A /* AppQuotasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppQuotasView.swift; sourceTree = "<group>"; };
 		F45A40BE06D632D040111744 /* iOSSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSSettingsView.swift; sourceTree = "<group>"; };
 		F5706467657D7417A4F615BB /* RemoteControlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteControlView.swift; sourceTree = "<group>"; };
 		F909861232ADCC5C92170855 /* KVStoreManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KVStoreManager.swift; sourceTree = "<group>"; };
@@ -106,6 +118,15 @@
 				C7D05A166D18E025ACDEDA20 /* PBKDF2Helper.swift */,
 			);
 			path = Shared;
+			sourceTree = "<group>";
+		};
+		1825C60B600A869D6C668A2F /* ScheduleTemplates */ = {
+			isa = PBXGroup;
+			children = (
+				1B13E51D9D717379279F5F2A /* ScheduleTemplateManager.swift */,
+				6DC033B29BD06DBD0351AA1F /* ScheduleTemplatesView.swift */,
+			);
+			path = ScheduleTemplates;
 			sourceTree = "<group>";
 		};
 		2E709FF11D49FD9524247FDF /* ClipboardGuard */ = {
@@ -184,6 +205,15 @@
 			path = Sources;
 			sourceTree = "<group>";
 		};
+		7C562BECAAACE0EB39606200 /* AppQuotas */ = {
+			isa = PBXGroup;
+			children = (
+				B733CA47117AB034CEC0D370 /* AppQuotaManager.swift */,
+				EBBB3E6B05FEA3327A41B98A /* AppQuotasView.swift */,
+			);
+			path = AppQuotas;
+			sourceTree = "<group>";
+		};
 		8E0F6311E271BB1A63CD3BF9 = {
 			isa = PBXGroup;
 			children = (
@@ -201,6 +231,15 @@
 			path = NetworkMonitor;
 			sourceTree = "<group>";
 		};
+		AC60F5372CECF2DB4F0933AE /* FocusMode */ = {
+			isa = PBXGroup;
+			children = (
+				ADA759CE912AA43A727E1320 /* FocusModeManager.swift */,
+				9AF35C0E801A018A83F9EF98 /* FocusModeView.swift */,
+			);
+			path = FocusMode;
+			sourceTree = "<group>";
+		};
 		ACA3A77C903F68F2D3937DD3 /* AppLocker */ = {
 			isa = PBXGroup;
 			children = (
@@ -210,10 +249,13 @@
 				0EC7D7A5BA720F58D22A91AA /* MacAppLockerApp.swift */,
 				3552440740293B5C0BE39957 /* MacContentView.swift */,
 				9A932A9C64198B92A0E70FE6 /* NotificationManager.swift */,
+				7C562BECAAACE0EB39606200 /* AppQuotas */,
 				2E709FF11D49FD9524247FDF /* ClipboardGuard */,
 				64AF2AEB2FB7186ADD5D0DCA /* FileLocker */,
+				AC60F5372CECF2DB4F0933AE /* FocusMode */,
 				664A3DD0955620EBCC66EF26 /* iOS */,
 				AC0A1C28BF2C624F421DA411 /* NetworkMonitor */,
+				1825C60B600A869D6C668A2F /* ScheduleTemplates */,
 				FC4E6CFC598CFF88F7583A19 /* ScreenPrivacy */,
 				BA265F4B96C629E8E513102A /* SecureNotes */,
 				5C2976B4FA921790CDCB5FBA /* SecureVault */,
@@ -407,6 +449,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				84ABBCC2EFF83E5301080711 /* AppMonitor.swift in Sources */,
+				0B7CB975DCBA36CE5A19A79B /* AppQuotaManager.swift in Sources */,
+				8D56BF1CE393830C7D465725 /* AppQuotasView.swift in Sources */,
 				7DFC7E7C980821E534639871 /* AuthenticationManager.swift in Sources */,
 				D2B40DAF2D2129A4B4EA25B1 /* BlockingOverlayView.swift in Sources */,
 				A25B6E5ACDFB18D2AEB9A35B /* ClipboardGuard.swift in Sources */,
@@ -415,6 +459,8 @@
 				E13029DB3A33CCF782AC757E /* CryptoHelper.swift in Sources */,
 				02474A0EBAA78A32CBE86667 /* FileLockerManager.swift in Sources */,
 				4CB9949DF987A305F7544498 /* FileLockerView.swift in Sources */,
+				473C404CC37ADDCE8AA56ACA /* FocusModeManager.swift in Sources */,
+				771D9747033FDB57A8E8E3AA /* FocusModeView.swift in Sources */,
 				0B29D22425A61C99EEEF63A4 /* InactivityMonitor.swift in Sources */,
 				12E55AFB0BC02EBF8D685C36 /* IntruderManager.swift in Sources */,
 				59EA0CA9FAE47A37AC57DA20 /* MacAppLockerApp.swift in Sources */,
@@ -424,6 +470,8 @@
 				3FEC782EE1CCE50591C6EF58 /* NetworkMonitorView.swift in Sources */,
 				1F7FFF241E92F50402B69DED /* NotificationManager.swift in Sources */,
 				D2576936A6F17F48955ADBA3 /* PBKDF2Helper.swift in Sources */,
+				9A8313800C34F366758B818D /* ScheduleTemplateManager.swift in Sources */,
+				B765712C3C4E9E58BDA067E2 /* ScheduleTemplatesView.swift in Sources */,
 				AC8D2D3E4D6CA110BED9FF31 /* ScreenPrivacyManager.swift in Sources */,
 				C16964F3C225621F95192276 /* ScreenPrivacyView.swift in Sources */,
 				5788CAB1C912EA30E50902FC /* SecureNotesManager.swift in Sources */,
