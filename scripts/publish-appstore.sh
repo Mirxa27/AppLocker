@@ -78,10 +78,24 @@ extract_mobileprovision_entitlements() {
     /usr/libexec/PlistBuddy -x -c 'Print :Entitlements' "$decoded_path" >"$output_path"
 }
 
+# PlistBuddy interprets dots in entitlement keys as nested paths; use plistlib for flat com.apple.* keys.
 plist_has_key() {
     local plist_path="$1"
     local key="$2"
-    /usr/libexec/PlistBuddy -c "Print :$key" "$plist_path" >/dev/null 2>&1
+    if [ ! -f "$plist_path" ] || [ ! -s "$plist_path" ]; then
+        return 1
+    fi
+    PLIST_PATH="$plist_path" ENTITLEMENT_KEY="$key" python3 - <<'PY'
+import os, plistlib, sys
+path = os.environ["PLIST_PATH"]
+key = os.environ["ENTITLEMENT_KEY"]
+try:
+    with open(path, "rb") as f:
+        data = plistlib.load(f)
+except Exception:
+    sys.exit(1)
+sys.exit(0 if isinstance(data, dict) and key in data else 1)
+PY
 }
 
 require_signed_entitlement() {
