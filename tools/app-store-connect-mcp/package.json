@@ -1,0 +1,13 @@
+{
+  "name": "app-store-connect-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pinned App Store Connect MCP server (npm: appstore-connect-mcp-server) for Cursor",
+  "scripts": {
+    "mcp": "node ./node_modules/appstore-connect-mcp-server/dist/src/index.js",
+    "start": "npm run mcp"
+  },
+  "dependencies": {
+    "appstore-connect-mcp-server": "1.1.2"
+  }
+}

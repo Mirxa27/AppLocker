@@ -120,6 +120,7 @@ If review cites **2.1.0 (App Completeness)**, **2.3.3 (Accurate Metadata)**, or 
 ## Verification Checklist
 
 - `make verify-entitlements` passes
+- App icons: after editing `Icon-1024.png`, run `./scripts/sync-app-icons-from-1024.sh`
 - `make test` passes
 - `make build-macos` passes
 - `make build-ios` passes on a machine with a compatible iOS simulator runtime
