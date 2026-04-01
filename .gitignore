@@ -10,6 +10,9 @@ AppLocker.xcodeproj/project.xcworkspace/xcuserdata/
 Package.resolved
 .swiftpm/
 
+# Local build trees
+build/
+
 # App builds
 *.app
 *.dmg
@@ -17,6 +20,7 @@ Package.resolved
 *.tar.gz
 
 # Distribution build outputs
+dist/
 dist/*.app
 dist/*.dmg
 dist/*.zip

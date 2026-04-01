@@ -7,6 +7,8 @@ import CryptoKit
 import Security
 #if os(macOS)
 import AppKit
+#elseif os(iOS)
+import UIKit
 #endif
 
 // MARK: - Command HMAC Signer
@@ -91,11 +93,30 @@ class NotificationManager: ObservableObject {
             DispatchQueue.main.async {
                 if granted {
                     AppLogger.notifications.info("Notification permissions granted")
+                    Self.registerForRemoteNotificationsOnMain()
                 } else if let error = error {
                     AppLogger.notifications.error("Notification permission error: \(error.localizedDescription, privacy: .public)")
                 }
             }
         }
+    }
+
+    /// Registers with APNs when notification permission is already granted (e.g. relaunch after enabling in Settings).
+    func registerForRemoteNotificationsIfAuthorized() {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            guard settings.authorizationStatus == .authorized else { return }
+            DispatchQueue.main.async {
+                Self.registerForRemoteNotificationsOnMain()
+            }
+        }
+    }
+
+    private static func registerForRemoteNotificationsOnMain() {
+        #if os(iOS)
+        UIApplication.shared.registerForRemoteNotifications()
+        #elseif os(macOS)
+        NSApplication.shared.registerForRemoteNotifications()
+        #endif
     }
     
     // MARK: - Local Notifications

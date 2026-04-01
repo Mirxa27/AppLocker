@@ -771,6 +771,12 @@ class AppMonitor: ObservableObject {
         Task { @MainActor in
             switch command.action {
             case .lockAll:
+                // Re-lock every temporarily unlocked app, then enforce blocking + system lock.
+                self.temporarilyUnlockedApps.removeAll()
+                self.addLog("Remote Command: Cleared temporary unlocks (lock all)")
+                if self.isMonitoring {
+                    self.checkRunningApps()
+                }
                 self.lockMacScreen()
             case .unlockAll:
                 for app in self.lockedApps {
@@ -786,15 +792,26 @@ class AppMonitor: ObservableObject {
         }
     }
 
+    /// Locks the interactive session: standard Lock Screen shortcut (⌃⌘Q), then screen saver as fallback.
     private func lockMacScreen() {
-        let source = """
-        tell application "System Events" to sleep
+        let shortcutScript = """
+        tell application "System Events" to keystroke "q" using {command down, control down}
         """
-        if let script = NSAppleScript(source: source) {
+        if let script = NSAppleScript(source: shortcutScript) {
             var error: NSDictionary?
             script.executeAndReturnError(&error)
+            if error == nil {
+                self.addLog("Remote Command: Lock Screen shortcut sent")
+                return
+            }
+            self.addLog("Remote Command: Lock shortcut failed — \(error?["NSAppleScriptErrorMessage"] as? String ?? "unknown")")
         }
-        self.addLog("Remote Command: Lock Screen executed")
+        let screensaverURL = URL(fileURLWithPath: "/System/Library/CoreServices/ScreenSaverEngine.app")
+        if NSWorkspace.shared.open(screensaverURL) {
+            self.addLog("Remote Command: Screen saver started (lock fallback)")
+        } else {
+            self.addLog("Remote Command: Could not lock session — no method succeeded")
+        }
     }
 }
 #endif

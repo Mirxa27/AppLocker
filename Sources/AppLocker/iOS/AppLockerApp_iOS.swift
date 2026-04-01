@@ -18,6 +18,7 @@ class iOSAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterD
     func application(_ app: UIApplication,
                      didFinishLaunchingWithOptions opts: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
+        NotificationManager.shared.registerForRemoteNotificationsIfAuthorized()
         // Request notification permissions after a short delay to avoid blocking launch
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
             NotificationManager.shared.requestNotificationPermissions()
@@ -50,7 +51,21 @@ class iOSAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterD
     func application(_ app: UIApplication,
                      didReceiveRemoteNotification userInfo: [AnyHashable: Any],
                      fetchCompletionHandler handler: @escaping (UIBackgroundFetchResult) -> Void) {
-        handler(.newData)
+        Task { @MainActor in
+            await CloudKitManager.shared.handleRemoteNotification(userInfo)
+            KVStoreManager.shared.decodeAllKeys()
+            handler(.newData)
+        }
+    }
+
+    func application(_ application: UIApplication,
+                     didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        AppLogger.notifications.debug("Registered for APNs (token length \(deviceToken.count))")
+    }
+
+    func application(_ application: UIApplication,
+                     didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        AppLogger.notifications.error("APNs registration failed: \(error.localizedDescription, privacy: .public)")
     }
 
     private func addPrivacySnapshot() {

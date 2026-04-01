@@ -44,7 +44,8 @@ final class CloudKitManager: ObservableObject {
             return
         }
 
-        container = CKContainer.default()
+        // Use the specific container identifier for AppLocker
+        container = CKContainer(identifier: "iCloud.com.mirxa.AppLocker")
 
         accountObserver = NotificationCenter.default.addObserver(
             forName: .CKAccountChanged,
@@ -256,6 +257,17 @@ final class CloudKitManager: ObservableObject {
         return await Task.detached(priority: .utility) {
             try? Data(contentsOf: fileURL)
         }.value
+    }
+
+    /// Called from APNs (`didReceiveRemoteNotification`) when CloudKit pushes a subscription event.
+    func handleRemoteNotification(_ userInfo: [AnyHashable: Any]) async {
+        await checkiCloudStatus()
+        guard cloudKitConfigured, iCloudAvailable else { return }
+        if let dict = userInfo as? [String: NSObject],
+           CKNotification(fromRemoteNotificationDictionary: dict) != nil {
+            lastSyncError = nil
+            AppLogger.cloud.info("Processed CloudKit remote notification")
+        }
     }
 
     // MARK: - Internals

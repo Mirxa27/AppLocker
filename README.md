@@ -5,7 +5,7 @@ A macOS application that lets you lock apps behind a passcode or Touch ID/Face I
 ## Features
 
 ### Core Security
-- **Passcode Protection** - Securely lock apps with a 4+ digit passcode (SHA-256 hashed with random salt, stored in Keychain)
+- **Passcode Protection** - Securely lock apps with a 4+ character passcode (**PBKDF2-HMAC-SHA256**, 200k iterations, per-device salt; legacy installs auto-upgrade from v1 hashing, stored in Keychain)
 - **Biometric Authentication** - Unlock with Touch ID or Face ID (if available)
 - **App Blocking Engine** - Prevents locked apps from opening without authentication (200ms polling + workspace observers)
 - **Escalating Lockout** - Progressive time-based lockout after failed passcode attempts (30s to 1 hour)
@@ -96,8 +96,8 @@ The "Stats" tab shows:
 
 ### Security Notes
 
-- Passcodes are hashed with SHA-256 and a random 32-byte salt
-- Credentials stored in macOS Keychain with `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`
+- Passcodes are derived with **PBKDF2** (200k iterations) and a random 32-byte salt; older data may verify once with SHA-256 (v1) and then upgrade to v2 on successful login
+- Credentials stored in macOS Keychain with `kSecAttrAccessibleWhenUnlockedThisDeviceOnly` (see code for exact accessibility flags per item)
 - No network connectivity required (except for cross-device iCloud sync)
 - Escalating lockout: 30s at 5 failures, 2min at 8, 5min at 10, 15min at 15, 1hr at 20
 - All data stays on your device
@@ -106,7 +106,8 @@ The "Stats" tab shows:
 
 - Built with Swift 5.9+ and SwiftUI
 - Uses LocalAuthentication framework for biometrics
-- Uses CryptoKit (SHA-256) for passcode hashing
+- Uses CryptoKit and CommonCrypto (PBKDF2, AES-GCM, HMAC) for cryptography
+- Architecture overview: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - Requires macOS 13.0 (Ventura) or later
 - Needs Accessibility permissions for app monitoring
 - Xcode project is generated from `project.yml` with XcodeGen

@@ -52,6 +52,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
         // Guard so the app doesn't crash when launched as a raw binary during development.
         if Bundle.main.bundleIdentifier != nil {
             UNUserNotificationCenter.current().delegate = self
+            NotificationManager.shared.registerForRemoteNotificationsIfAuthorized()
             NotificationManager.shared.requestNotificationPermissions()
         }
 
@@ -64,6 +65,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
         if !isScreenshotCaptureMode {
             Task { @MainActor in
                 await CloudKitManager.shared.checkiCloudStatus()
+                CloudKitManager.shared.setupPushSubscriptions()
                 CloudKitManager.shared.pruneOldRecords()
             }
         }
@@ -357,6 +359,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
         )
         
         UNUserNotificationCenter.current().add(request)
+    }
+
+    func application(_ application: NSApplication, didReceiveRemoteNotification userInfo: [String: Any]) {
+        Task { @MainActor in
+            await CloudKitManager.shared.handleRemoteNotification(userInfo)
+        }
+    }
+
+    func application(_ application: NSApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        AppLogger.notifications.debug("Registered for APNs on macOS (token length \(deviceToken.count))")
+    }
+
+    func application(_ application: NSApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        AppLogger.notifications.error("APNs registration failed (macOS): \(error.localizedDescription, privacy: .public)")
     }
 }
 #endif

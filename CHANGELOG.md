@@ -28,6 +28,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Exported backup metadata now uses the current app version instead of a hardcoded `3.0`
 - iOS file locker resets now delete encrypted payloads before clearing the in-memory metadata
 
+## [3.7.0] - 2026-04-01
+
+### Added
+
+- `docs/ARCHITECTURE.md` describing targets, data flow, storage, and release process
+- `scripts/generate-app-icons.sh` to regenerate App Icon PNGs from a master image
+- `CloudKitManager.handleRemoteNotification` and unit tests; APNs registration when notifications are authorized
+- `Tests/AppLockerTests/CloudKitManagerTests.swift`
+
+### Changed
+
+- README security section aligned with PBKDF2 passcode storage (v1 migration path documented)
+- Remote “Lock All” from iOS companion: clears temporary unlocks, re-checks running apps, locks screen (⌃⌘Q with screen-saver fallback) instead of putting the Mac to sleep
+- macOS and iOS register for remote notifications and handle CloudKit-related pushes; macOS runs `setupPushSubscriptions` on launch
+
+### Fixed
+
+- Restored complete App Icon PNG set for iOS and macOS asset catalog entries
+
 ## [3.6.0] - 2026-03-02
 
 ### Changed
