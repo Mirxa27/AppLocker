@@ -121,8 +121,22 @@ require_signed_entitlement() {
     exit 1
 }
 
-verify_ios_archive_entitlements() {
-    local app_path="$IOS_ARCHIVE_PATH/Products/Applications/${IOS_SCHEME}.app"
+# Verify the **exported** IPA (App Store distribution signing). Archives are often Development-signed
+# and omit iCloud entitlements until export re-signs with the App Store provisioning profile.
+verify_ios_exported_ipa_entitlements() {
+    local ipa_path="$1"
+    local unzip_dir="$TMP_DIR/ipa-entitlements-check"
+    rm -rf "$unzip_dir"
+    mkdir -p "$unzip_dir"
+    unzip -q "$ipa_path" -d "$unzip_dir"
+
+    local app_path
+    app_path=$(find "$unzip_dir/Payload" -maxdepth 1 -name "*.app" -print -quit)
+    if [ -z "$app_path" ] || [ ! -d "$app_path" ]; then
+        echo -e "${RED}Could not find .app inside IPA at ${ipa_path}.${NC}"
+        exit 1
+    fi
+
     local signed_plist="$TMP_DIR/ios-signed-entitlements.plist"
     local profile_plist="$TMP_DIR/ios-profile-entitlements.plist"
 
@@ -130,17 +144,17 @@ verify_ios_archive_entitlements() {
     extract_mobileprovision_entitlements "$app_path/embedded.mobileprovision" "$profile_plist"
 
     require_signed_entitlement "$signed_plist" "$profile_plist" "com.apple.developer.icloud-container-identifiers" \
-        "The iOS archive is missing iCloud container entitlements."
+        "The exported iOS IPA is missing iCloud container entitlements."
     require_signed_entitlement "$signed_plist" "$profile_plist" "com.apple.developer.ubiquity-container-identifiers" \
-        "The iOS archive is missing ubiquity container entitlements."
+        "The exported iOS IPA is missing ubiquity container entitlements."
     require_signed_entitlement "$signed_plist" "$profile_plist" "com.apple.developer.icloud-services" \
-        "The iOS archive is missing CloudKit service entitlements."
+        "The exported iOS IPA is missing CloudKit service entitlements."
     require_signed_entitlement "$signed_plist" "$profile_plist" "com.apple.developer.ubiquity-kvstore-identifier" \
-        "The iOS archive is missing the shared iCloud key-value store entitlement."
+        "The exported iOS IPA is missing the shared iCloud key-value store entitlement."
     require_signed_entitlement "$signed_plist" "$profile_plist" "com.apple.developer.family-controls" \
-        "The iOS archive is missing the Family Controls entitlement."
+        "The exported iOS IPA is missing the Family Controls entitlement."
     require_signed_entitlement "$signed_plist" "$profile_plist" "com.apple.developer.family-controls.app-and-website-usage" \
-        "The iOS archive is missing the Family Controls usage-data entitlement."
+        "The exported iOS IPA is missing the Family Controls usage-data entitlement."
 }
 
 verify_macos_archive_entitlements() {
@@ -257,8 +271,6 @@ archive_ios() {
         -allowProvisioningUpdates \
         archive
 
-    verify_ios_archive_entitlements
-
     write_ios_export_options
 
     echo -e "${YELLOW}Exporting iOS IPA...${NC}"
@@ -274,6 +286,8 @@ archive_ios() {
         echo -e "${RED}Expected IPA not found at ${ipa_path}.${NC}"
         exit 1
     fi
+
+    verify_ios_exported_ipa_entitlements "$ipa_path"
 
     upload_package "$ipa_path" "iOS IPA"
 }
@@ -323,6 +337,7 @@ require_tool xcodegen
 require_tool xcodebuild
 require_tool xcrun
 require_tool security
+require_tool unzip
 if [ "$UPLOAD_TO_APP_STORE_CONNECT" = "1" ]; then
     xcrun --find altool >/dev/null 2>&1 || {
         echo -e "${RED}Missing required tool: altool${NC}"
