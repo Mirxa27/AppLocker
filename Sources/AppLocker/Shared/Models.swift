@@ -233,12 +233,18 @@ struct NotificationRecord: Codable, Identifiable {
         case blocked
         case unlocked
         case failedAttempt
+        case quotaWarning
+        case quotaExceeded
+        case focusMode
 
         var displayName: String {
             switch self {
             case .blocked: return "Blocked"
             case .unlocked: return "Unlocked"
             case .failedAttempt: return "Failed Attempt"
+            case .quotaWarning: return "Quota Warning"
+            case .quotaExceeded: return "Quota Exceeded"
+            case .focusMode: return "Focus Mode"
             }
         }
 
@@ -247,6 +253,9 @@ struct NotificationRecord: Codable, Identifiable {
             case .blocked: return "hand.raised.fill"
             case .unlocked: return "lock.open.fill"
             case .failedAttempt: return "exclamationmark.triangle.fill"
+            case .quotaWarning: return "timer"
+            case .quotaExceeded: return "xmark.circle.fill"
+            case .focusMode: return "moon.stars.fill"
             }
         }
 
@@ -255,6 +264,9 @@ struct NotificationRecord: Codable, Identifiable {
             case .blocked: return "orange"
             case .unlocked: return "green"
             case .failedAttempt: return "red"
+            case .quotaWarning: return "yellow"
+            case .quotaExceeded: return "red"
+            case .focusMode: return "indigo"
             }
         }
     }

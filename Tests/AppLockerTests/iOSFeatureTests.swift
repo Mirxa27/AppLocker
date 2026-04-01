@@ -184,6 +184,9 @@ final class NotificationRecordTests: XCTestCase {
         XCTAssertEqual(NotificationRecord.NotificationType.blocked.icon, "hand.raised.fill")
         XCTAssertEqual(NotificationRecord.NotificationType.unlocked.icon, "lock.open.fill")
         XCTAssertEqual(NotificationRecord.NotificationType.failedAttempt.icon, "exclamationmark.triangle.fill")
+
+        XCTAssertEqual(NotificationRecord.NotificationType.quotaWarning.displayName, "Quota Warning")
+        XCTAssertEqual(NotificationRecord.NotificationType.focusMode.displayName, "Focus Mode")
     }
 }
 

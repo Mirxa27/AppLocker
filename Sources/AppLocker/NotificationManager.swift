@@ -11,6 +11,16 @@ import AppKit
 import UIKit
 #endif
 
+/// `UNUserNotificationCenter` asserts when the process has no real app bundle (e.g. `swift test` / xctest host).
+private enum UserNotificationsHost {
+    static var isSupported: Bool {
+        let path = Bundle.main.bundleURL.path
+        if path.contains("/Developer/usr/bin") { return false }
+        if path.contains(".xctest") { return false }
+        return true
+    }
+}
+
 // MARK: - Command HMAC Signer
 
 private enum CommandSigner {
@@ -89,6 +99,7 @@ class NotificationManager: ObservableObject {
     // MARK: - Permissions
     
     func requestNotificationPermissions() {
+        guard UserNotificationsHost.isSupported else { return }
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
             DispatchQueue.main.async {
                 if granted {
@@ -103,6 +114,7 @@ class NotificationManager: ObservableObject {
 
     /// Registers with APNs when notification permission is already granted (e.g. relaunch after enabling in Settings).
     func registerForRemoteNotificationsIfAuthorized() {
+        guard UserNotificationsHost.isSupported else { return }
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             guard settings.authorizationStatus == .authorized else { return }
             DispatchQueue.main.async {
@@ -124,33 +136,35 @@ class NotificationManager: ObservableObject {
     func sendBlockedAppNotification(appName: String, bundleID: String) {
         guard notificationsEnabled else { return }
         
-        let content = UNMutableNotificationContent()
-        content.title = "App Access Blocked"
-        content.subtitle = "\(appName) was blocked"
-        content.body = "Someone attempted to open \(appName) which is locked by AppLocker."
-        content.sound = .default
-        content.categoryIdentifier = "APP_BLOCKED"
-        content.userInfo = [
-            "bundleID": bundleID,
-            "appName": appName,
-            "timestamp": Date().timeIntervalSince1970
-        ]
-        
-        // Add action buttons
-        let unlockAction = UNNotificationAction(identifier: "UNLOCK", title: "Unlock Temporarily", options: [.authenticationRequired])
-        let dismissAction = UNNotificationAction(identifier: "DISMISS", title: "Dismiss", options: [.destructive])
-        let category = UNNotificationCategory(identifier: "APP_BLOCKED", actions: [unlockAction, dismissAction], intentIdentifiers: [], options: [])
-        UNUserNotificationCenter.current().setNotificationCategories([category])
-        
-        let request = UNNotificationRequest(
-            identifier: "blocked-\(bundleID)-\(Date().timeIntervalSince1970)",
-            content: content,
-            trigger: nil // Deliver immediately
-        )
-        
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
-                AppLogger.notifications.error("Failed to send blocked-app notification: \(error.localizedDescription, privacy: .public)")
+        if UserNotificationsHost.isSupported {
+            let content = UNMutableNotificationContent()
+            content.title = "App Access Blocked"
+            content.subtitle = "\(appName) was blocked"
+            content.body = "Someone attempted to open \(appName) which is locked by AppLocker."
+            content.sound = .default
+            content.categoryIdentifier = "APP_BLOCKED"
+            content.userInfo = [
+                "bundleID": bundleID,
+                "appName": appName,
+                "timestamp": Date().timeIntervalSince1970
+            ]
+            
+            // Add action buttons
+            let unlockAction = UNNotificationAction(identifier: "UNLOCK", title: "Unlock Temporarily", options: [.authenticationRequired])
+            let dismissAction = UNNotificationAction(identifier: "DISMISS", title: "Dismiss", options: [.destructive])
+            let category = UNNotificationCategory(identifier: "APP_BLOCKED", actions: [unlockAction, dismissAction], intentIdentifiers: [], options: [])
+            UNUserNotificationCenter.current().setNotificationCategories([category])
+            
+            let request = UNNotificationRequest(
+                identifier: "blocked-\(bundleID)-\(Date().timeIntervalSince1970)",
+                content: content,
+                trigger: nil // Deliver immediately
+            )
+            
+            UNUserNotificationCenter.current().add(request) { error in
+                if let error = error {
+                    AppLogger.notifications.error("Failed to send blocked-app notification: \(error.localizedDescription, privacy: .public)")
+                }
             }
         }
         
@@ -172,18 +186,20 @@ class NotificationManager: ObservableObject {
     func sendUnlockedAppNotification(appName: String, bundleID: String) {
         guard notificationsEnabled else { return }
         
-        let content = UNMutableNotificationContent()
-        content.title = "App Unlocked"
-        content.body = "\(appName) was unlocked successfully."
-        content.sound = .default
-        
-        let request = UNNotificationRequest(
-            identifier: "unlocked-\(bundleID)-\(Date().timeIntervalSince1970)",
-            content: content,
-            trigger: nil
-        )
-        
-        UNUserNotificationCenter.current().add(request)
+        if UserNotificationsHost.isSupported {
+            let content = UNMutableNotificationContent()
+            content.title = "App Unlocked"
+            content.body = "\(appName) was unlocked successfully."
+            content.sound = .default
+            
+            let request = UNNotificationRequest(
+                identifier: "unlocked-\(bundleID)-\(Date().timeIntervalSince1970)",
+                content: content,
+                trigger: nil
+            )
+            
+            UNUserNotificationCenter.current().add(request)
+        }
         
         let record = NotificationRecord(
             appName: appName,
@@ -197,20 +213,22 @@ class NotificationManager: ObservableObject {
     func sendFailedAuthNotification(appName: String, bundleID: String) {
         guard notificationsEnabled else { return }
         
-        let content = UNMutableNotificationContent()
-        content.title = "Failed Unlock Attempt"
-        content.subtitle = "Incorrect passcode for \(appName)"
-        content.body = "Someone entered an incorrect passcode trying to unlock \(appName). This could be an unauthorized access attempt."
-        content.sound = UNNotificationSound.defaultCritical
-        content.interruptionLevel = .critical
-        
-        let request = UNNotificationRequest(
-            identifier: "failed-\(bundleID)-\(Date().timeIntervalSince1970)",
-            content: content,
-            trigger: nil
-        )
-        
-        UNUserNotificationCenter.current().add(request)
+        if UserNotificationsHost.isSupported {
+            let content = UNMutableNotificationContent()
+            content.title = "Failed Unlock Attempt"
+            content.subtitle = "Incorrect passcode for \(appName)"
+            content.body = "Someone entered an incorrect passcode trying to unlock \(appName). This could be an unauthorized access attempt."
+            content.sound = UNNotificationSound.defaultCritical
+            content.interruptionLevel = .critical
+            
+            let request = UNNotificationRequest(
+                identifier: "failed-\(bundleID)-\(Date().timeIntervalSince1970)",
+                content: content,
+                trigger: nil
+            )
+            
+            UNUserNotificationCenter.current().add(request)
+        }
         
         let record = NotificationRecord(
             appName: appName,
@@ -286,38 +304,56 @@ class NotificationManager: ObservableObject {
     func sendQuotaWarningNotification(appName: String, bundleID: String, minutesRemaining: Int) {
         guard notificationsEnabled else { return }
         
-        let content = UNMutableNotificationContent()
-        content.title = "⏱️ App Quota Warning"
-        content.body = minutesRemaining > 0
-            ? "You have \(minutesRemaining) minutes left for \(appName) today."
-            : "You've almost reached your daily limit for \(appName)."
-        content.sound = .default
+        if UserNotificationsHost.isSupported {
+            let content = UNMutableNotificationContent()
+            content.title = "⏱️ App Quota Warning"
+            content.body = minutesRemaining > 0
+                ? "You have \(minutesRemaining) minutes left for \(appName) today."
+                : "You've almost reached your daily limit for \(appName)."
+            content.sound = .default
+            
+            let request = UNNotificationRequest(
+                identifier: "quota-warning-\(bundleID)",
+                content: content,
+                trigger: nil
+            )
+            
+            UNUserNotificationCenter.current().add(request)
+        }
         
-        let request = UNNotificationRequest(
-            identifier: "quota-warning-\(bundleID)",
-            content: content,
-            trigger: nil
-        )
-        
-        UNUserNotificationCenter.current().add(request)
+        addToHistory(NotificationRecord(
+            appName: appName,
+            bundleID: bundleID,
+            timestamp: Date(),
+            type: .quotaWarning
+        ))
     }
     
     func sendQuotaExceededNotification(appName: String, bundleID: String) {
         guard notificationsEnabled else { return }
         
-        let content = UNMutableNotificationContent()
-        content.title = "🚫 App Quota Exceeded"
-        content.body = "You've reached your daily limit for \(appName). The app has been terminated."
-        content.sound = .defaultCritical
-        content.interruptionLevel = .timeSensitive
+        if UserNotificationsHost.isSupported {
+            let content = UNMutableNotificationContent()
+            content.title = "🚫 App Quota Exceeded"
+            content.body = "You've reached your daily limit for \(appName). The app has been terminated."
+            content.sound = .defaultCritical
+            content.interruptionLevel = .timeSensitive
+            
+            let request = UNNotificationRequest(
+                identifier: "quota-exceeded-\(bundleID)",
+                content: content,
+                trigger: nil
+            )
+            
+            UNUserNotificationCenter.current().add(request)
+        }
         
-        let request = UNNotificationRequest(
-            identifier: "quota-exceeded-\(bundleID)",
-            content: content,
-            trigger: nil
-        )
-        
-        UNUserNotificationCenter.current().add(request)
+        addToHistory(NotificationRecord(
+            appName: appName,
+            bundleID: bundleID,
+            timestamp: Date(),
+            type: .quotaExceeded
+        ))
     }
 
     // MARK: - Focus Mode Notifications
@@ -325,24 +361,34 @@ class NotificationManager: ObservableObject {
     func sendFocusModeNotification(profile: String, started: Bool) {
         guard notificationsEnabled else { return }
         
-        let content = UNMutableNotificationContent()
-        if started {
-            content.title = "🎯 Focus Mode Started"
-            content.body = "Profile: \(profile). Stay focused!"
-            content.sound = .default
-        } else {
-            content.title = "✅ Focus Mode Ended"
-            content.body = "Great job! Take a moment to rest."
-            content.sound = .default
+        if UserNotificationsHost.isSupported {
+            let content = UNMutableNotificationContent()
+            if started {
+                content.title = "🎯 Focus Mode Started"
+                content.body = "Profile: \(profile). Stay focused!"
+                content.sound = .default
+            } else {
+                content.title = "✅ Focus Mode Ended"
+                content.body = "Great job! Take a moment to rest."
+                content.sound = .default
+            }
+            
+            let request = UNNotificationRequest(
+                identifier: "focus-mode-\(Date().timeIntervalSince1970)",
+                content: content,
+                trigger: nil
+            )
+            
+            UNUserNotificationCenter.current().add(request)
         }
         
-        let request = UNNotificationRequest(
-            identifier: "focus-mode-\(Date().timeIntervalSince1970)",
-            content: content,
-            trigger: nil
-        )
-        
-        UNUserNotificationCenter.current().add(request)
+        let label = started ? "Started" : "Ended"
+        addToHistory(NotificationRecord(
+            appName: "\(profile) — \(label)",
+            bundleID: "com.applocker.focus",
+            timestamp: Date(),
+            type: .focusMode
+        ))
     }
 
     // MARK: - Remote Commands
@@ -377,17 +423,19 @@ class NotificationManager: ObservableObject {
            Date().timeIntervalSince1970 - timestamp < 60 {
 
             // Show alert
-            let content = UNMutableNotificationContent()
-            content.title = "AppLocker Alert from \(deviceName)"
-            content.body = message
-            content.sound = .defaultCritical
+            if UserNotificationsHost.isSupported {
+                let content = UNMutableNotificationContent()
+                content.title = "AppLocker Alert from \(deviceName)"
+                content.body = message
+                content.sound = .defaultCritical
 
-            let request = UNNotificationRequest(
-                identifier: "cross-device-\(timestamp)",
-                content: content,
-                trigger: nil
-            )
-            UNUserNotificationCenter.current().add(request)
+                let request = UNNotificationRequest(
+                    identifier: "cross-device-\(timestamp)",
+                    content: content,
+                    trigger: nil
+                )
+                UNUserNotificationCenter.current().add(request)
+            }
         }
 
         // Check for Commands
@@ -406,13 +454,20 @@ class NotificationManager: ObservableObject {
     // MARK: - History
     
     private func addToHistory(_ record: NotificationRecord) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            self.notificationHistory.insert(record, at: 0)
-            if self.notificationHistory.count > 100 {
-                self.notificationHistory = Array(self.notificationHistory.prefix(100))
+        let apply: (NotificationManager) -> Void = { manager in
+            manager.notificationHistory.insert(record, at: 0)
+            if manager.notificationHistory.count > 100 {
+                manager.notificationHistory = Array(manager.notificationHistory.prefix(100))
             }
-            self.saveHistory()
+            manager.saveHistory()
+        }
+        if Thread.isMainThread {
+            apply(self)
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                apply(self)
+            }
         }
     }
     

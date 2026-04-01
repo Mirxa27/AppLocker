@@ -73,6 +73,8 @@ PLATFORMS=macos ./scripts/publish-appstore.sh
 
 To upload the exported artifacts directly to App Store Connect after export:
 
+**Option A — App Store Connect API key (recommended for CI):**
+
 ```bash
 export UPLOAD_TO_APP_STORE_CONNECT=1
 export ASC_API_KEY_ID="YOUR_API_KEY_ID"
@@ -81,7 +83,18 @@ export ASC_API_KEY_PATH="/absolute/path/AuthKey_YOUR_API_KEY_ID.p8"
 ./scripts/publish-appstore.sh
 ```
 
-The upload step validates each package with `xcrun altool` and then uploads it only when all required API key variables are set.
+**Option B — Apple ID and app-specific password** (when API key variables are not set):
+
+```bash
+export UPLOAD_TO_APP_STORE_CONNECT=1
+export APPLE_ID="you@example.com"
+export APPLE_ASC_PASSWORD="xxxx-xxxx-xxxx-xxxx"
+./scripts/publish-appstore.sh
+```
+
+Use an [app-specific password](https://support.apple.com/en-us/102654) from appleid.apple.com, not your normal Apple ID password.
+
+The upload step validates each package with `xcrun altool` and then uploads when either the API key trio **or** `APPLE_ID` + `APPLE_ASC_PASSWORD` is set.
 
 ## Version Source
 
