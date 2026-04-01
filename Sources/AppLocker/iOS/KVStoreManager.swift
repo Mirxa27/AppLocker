@@ -72,16 +72,12 @@ class KVStoreManager: ObservableObject {
             lockedApps = apps
         }
 
-        if let b64 = store.string(forKey: "com.applocker.encryptedNotes"),
-           let data = Data(base64Encoded: b64) {
-            let dec = JSONDecoder()
-            dec.dateDecodingStrategy = .iso8601
-            if let notes = try? dec.decode([EncryptedNote].self, from: data) {
-                encryptedNotes = notes
-            }
+        if let envelope = SecureNotesSync.decodeEnvelope(fromBase64: store.string(forKey: SecureNotesSync.notesStoreKey)) {
+            encryptedNotes = envelope.notes.sorted { $0.modifiedAt > $1.modifiedAt }
+            lastSyncTime = max(lastSyncTime ?? .distantPast, envelope.updatedAt)
         }
 
-        if let b64 = store.string(forKey: "com.applocker.notesSalt"),
+        if let b64 = store.string(forKey: SecureNotesSync.notesSaltStoreKey),
            let saltData = Data(base64Encoded: b64) {
             notesSalt = saltData
         }
@@ -93,6 +89,25 @@ class KVStoreManager: ObservableObject {
                 lastSyncTime = Date(timeIntervalSince1970: ts)
             }
         }
+    }
+
+    func storeEncryptedNotes(_ notes: [EncryptedNote], updatedAt: Date = Date()) {
+        let envelope = SecureNotesSync.makeEnvelope(notes: notes, updatedAt: updatedAt)
+        do {
+            let base64 = try SecureNotesSync.encodeEnvelopeToBase64(envelope)
+            store.set(base64, forKey: SecureNotesSync.notesStoreKey)
+            store.synchronize()
+            encryptedNotes = notes.sorted { $0.modifiedAt > $1.modifiedAt }
+            lastSyncTime = updatedAt
+        } catch {
+            AppLogger.cloud.error("Failed to encode encrypted notes for sync: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    func storeNotesSalt(_ salt: Data) {
+        store.set(salt.base64EncodedString(), forKey: SecureNotesSync.notesSaltStoreKey)
+        store.synchronize()
+        notesSalt = salt
     }
 
     func clearHistory() {

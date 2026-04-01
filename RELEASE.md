@@ -1,162 +1,134 @@
 # Release Process
 
-This document describes how to create a new release of AppLocker.
+## Local Unsigned Release
 
-## Automated Release (Recommended)
-
-The easiest way to release is using GitHub Actions:
-
-1. **Commit and push your changes**:
-
-   ```bash
-   git add -A
-   git commit -m "Prepare release 3.1"
-   git push origin main
-   ```
-
-2. **Create and push a tag** (the version is derived from the tag):
-
-   ```bash
-   git tag -a v3.1 -m "Release v3.1"
-   git push origin v3.1
-   ```
-
-3. **GitHub Actions will automatically**:
-   - Build the release binary
-   - Create a DMG installer
-   - Create a GitHub Release with the DMG attached
-   - Generate release notes
-
-## Manual Release
-
-If you prefer to build locally:
-
-### Prerequisites
-
-- macOS 13.0+ (Ventura)
-- Xcode 15.0+ or Swift 5.9+
-- Code signing certificate (optional for ad-hoc signing)
-
-### Build Steps
-
-1. **Clone and build**:
-
-   ```bash
-   cd ~/AppLocker
-   make release
-   ```
-
-2. **Or use the script directly**:
-
-   ```bash
-   ./scripts/build-release.sh
-   ```
-
-3. **Find the release artifacts** in `release/`:
-   - `AppLocker.app` - The signed app bundle
-   - `AppLocker-X.X.dmg` - The DMG installer
-
-4. **Create GitHub Release** (optional):
-   ```bash
-   gh release create v3.1 \
-     release/AppLocker-3.1.dmg \
-     --title "AppLocker v3.1" \
-     --notes "Release notes here"
-   ```
-
-## Version Numbering
-
-We follow [Semantic Versioning](https://semver.org/):
-
-- **MAJOR** - Breaking changes (e.g., 3.0.0 → 4.0.0)
-- **MINOR** - New features, backwards compatible (e.g., 3.0.0 → 3.1.0)
-- **PATCH** - Bug fixes (e.g., 3.0.0 → 3.0.1)
-
-Current version: Derived from git tag (e.g., `v3.1` → version `3.1`)
-
-## Code Signing
-
-### For Development (Ad-hoc)
+Use this for local verification builds and ad-hoc distribution:
 
 ```bash
-codesign --force --deep --sign - --options runtime AppLocker.app
+make test
+./scripts/build-release.sh
 ```
 
-### For Distribution (Recommended)
+Artifacts are written to `release/`:
 
-Requires Apple Developer account:
+1. `AppLocker.app`
+2. `AppLocker.xcarchive`
+3. `AppLocker-<marketing-version>.dmg`
+
+The script regenerates `AppLocker.xcodeproj` from `project.yml`, archives the real Xcode app, applies an ad-hoc signature, and packages a DMG.
+
+## Signed Release
+
+Use this for Developer ID distribution outside the Mac App Store:
 
 ```bash
-# Using Developer ID for distribution outside Mac App Store
-codesign --force --deep --sign "Developer ID Application: Your Name" \
-  --entitlements dist/entitlements.plist \
-  --options runtime \
-  AppLocker.app
-
-# Notarize (required for Gatekeeper)
-xcrun notarytool submit AppLocker-X.X.dmg \
-  --keychain-profile "AC_PASSWORD" \
-  --wait
+SIGNING_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
+./scripts/release-signed.sh
 ```
 
-## Distribution Checklist
+If `SIGNING_IDENTITY` is omitted, the script will try to auto-detect the first `Developer ID Application` identity in the login keychain.
 
-Before releasing:
+Optional notarization environment variables:
 
-- [ ] Version tag created (e.g., `v3.1`)
-- [ ] `CHANGELOG.md` updated with changes
-- [ ] README updated if needed
-- [ ] All features tested on clean macOS install
-- [ ] Accessibility permissions tested
-- [ ] Code signed (ad-hoc minimum, Developer ID recommended)
-- [ ] DMG created and tested
-- [ ] Git tag created with `v` prefix (e.g., `v3.1`)
-- [ ] GitHub Release created with artifacts
-- [ ] Release notes written
+```bash
+export APPLE_ID="name@example.com"
+export APPLE_TEAM_ID="TEAMID"
+export APPLE_ASC_PASSWORD="app-specific-password"
+./scripts/release-signed.sh
+```
+
+Signed artifacts are written to `release/signed/`.
+
+## App Store Release
+
+Use this to archive and export the App Store deliverables for both platforms:
+
+```bash
+make test
+make publish-appstore
+```
+
+The script writes its artifacts to `dist/publish/`:
+
+1. `AppLockerCompanion.xcarchive`
+2. `ios-appstore/AppLockerCompanion.ipa`
+3. `AppLocker-mac-appstore.xcarchive`
+4. `mac-appstore/AppLocker.pkg`
+5. `ExportOptions-iOS-AppStore.plist`
+6. `ExportOptions-mac-AppStore.plist`
+
+The App Store script:
+
+1. Regenerates `AppLocker.xcodeproj` from `project.yml`
+2. Detects the local signing team from installed identities unless `APPLE_TEAM_ID` or `DEVELOPMENT_TEAM` is set
+3. Archives the iOS and macOS targets with automatic signing and provisioning updates enabled
+4. Exports a signed `.ipa` for iOS and `.pkg` for macOS using `app-store-connect` export options
+
+To export only one platform:
+
+```bash
+PLATFORMS=ios ./scripts/publish-appstore.sh
+PLATFORMS=macos ./scripts/publish-appstore.sh
+```
+
+To upload the exported artifacts directly to App Store Connect after export:
+
+```bash
+export UPLOAD_TO_APP_STORE_CONNECT=1
+export ASC_API_KEY_ID="YOUR_API_KEY_ID"
+export ASC_API_ISSUER_ID="YOUR_ISSUER_ID"
+export ASC_API_KEY_PATH="/absolute/path/AuthKey_YOUR_API_KEY_ID.p8"
+./scripts/publish-appstore.sh
+```
+
+The upload step validates each package with `xcrun altool` and then uploads it only when all required API key variables are set.
+
+## Version Source
+
+Release scripts read the version from the Xcode build settings generated from `project.yml`:
+
+1. `MARKETING_VERSION`
+2. `CURRENT_PROJECT_VERSION`
+3. `PRODUCT_BUNDLE_IDENTIFIER`
+
+Update versioning in `project.yml` before packaging a release.
+
+## Verification Checklist
+
+- `make test` passes
+- `make build-macos` passes
+- `make build-ios` passes on a machine with a compatible iOS simulator runtime
+- `make publish-appstore` exports the `.ipa` and `.pkg` on a machine with valid App Store signing assets
+- Accessibility permissions flow is verified on macOS
+- Release scripts produce `.app`, `.xcarchive`, and `.dmg`
+- Signed release passes `codesign --verify --deep --strict`
+- Signed release passes `spctl --assess --type execute`
+- Notarization completes if distribution outside your own machines is required
 
 ## Troubleshooting
 
-### Build Fails
+### Build the generated project explicitly
 
 ```bash
-# Clean and rebuild
+xcodegen generate --spec project.yml
+xcodebuild -project AppLocker.xcodeproj -scheme AppLocker -configuration Release -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO archive
+```
+
+### Reset a broken local release directory
+
+```bash
+rm -rf release
 make clean
-make release
 ```
 
-### Code Signing Issues
+### Check signing identities
 
 ```bash
-# Reset signatures
-codesign --remove-signature AppLocker.app
-codesign --force --deep --sign - AppLocker.app
-
-# Verify
-codesign --verify --deep --strict AppLocker.app
-codesign -dvvv AppLocker.app
+security find-identity -v -p codesigning
 ```
 
-### DMG Creation Fails
+### Validate a notarized DMG
 
 ```bash
-# Manual DMG creation
-hdiutil create -volname "AppLocker" \
-  -srcfolder AppLocker.app \
-  -ov -format UDZO \
-  AppLocker.dmg
+xcrun stapler validate release/signed/AppLocker-<marketing-version>.dmg
 ```
-
-## Release Assets
-
-Each release should include:
-
-1. **AppLocker-X.X.dmg** - Main distribution file
-2. **Source code** (zip and tar.gz) - Auto-generated by GitHub
-3. **Release notes** - List of changes
-
-## Security Considerations
-
-- Never commit signing certificates or private keys
-- Use GitHub Secrets for sensitive data in Actions
-- Test the signed app on a fresh macOS install before release
-- Consider submitting to Apple for notarization for wide distribution

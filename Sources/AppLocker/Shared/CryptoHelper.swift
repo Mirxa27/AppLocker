@@ -86,7 +86,7 @@ enum CryptoHelper {
         SecItemDelete(query as CFDictionary)
         let status = SecItemAdd(query as CFDictionary, nil)
         if status != errSecSuccess {
-            print("AppLocker CryptoHelper: failed to save salt '\(key)' to Keychain, status: \(status)")
+            AppLogger.crypto.error("Failed to save keychain salt '\(key, privacy: .public)': \(status)")
         }
     }
 

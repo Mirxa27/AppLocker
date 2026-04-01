@@ -295,7 +295,7 @@ class VaultManager: ObservableObject {
                     // SECURITY NOTE: This requires that the passcode was used at least once to generate the salt.
                     // If no passcode-based unlock has happened, biometric unlock falls back to passcode prompt.
                     if self.sessionKey == nil {
-                        // We don't have a session key from passcode. Use a placeholder derived from device identity.
+                        // We don't have a session key from passcode. Use an interim device-bound identity fallback.
                         // This path should not occur in normal flow (biometrics only available after passcode login).
                         completion(false)
                         return

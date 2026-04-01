@@ -13,6 +13,8 @@ class SecureNotesManager: ObservableObject {
 
     private var sessionKey: SymmetricKey?
     private let keychainSaltKey = "com.applocker.notesSalt"
+    private let kvStore = NSUbiquitousKeyValueStore.default
+    private var kvObserver: NSObjectProtocol?
 
     private var notesFileURL: URL {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -21,7 +23,24 @@ class SecureNotesManager: ObservableObject {
         return dir.appendingPathComponent("notes_meta.json")
     }
 
-    private init() {}
+    private init() {
+        kvObserver = NotificationCenter.default.addObserver(
+            forName: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
+            object: kvStore,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.refreshFromRemoteStore()
+            }
+        }
+        kvStore.synchronize()
+    }
+
+    deinit {
+        if let kvObserver {
+            NotificationCenter.default.removeObserver(kvObserver)
+        }
+    }
 
     func unlock(passcode: String) -> Bool {
         guard AuthenticationManager.shared.verifyPasscode(passcode) else {
@@ -32,13 +51,9 @@ class SecureNotesManager: ObservableObject {
             sessionKey = CryptoHelper.deriveKey(passcode: passcode, salt: salt, context: "applocker.notes.v1")
             isUnlocked = true
             lastError = nil
-            loadNotes()
-            // Sync salt to iCloud KV so iOS companion can derive the same notes key
-            NSUbiquitousKeyValueStore.default.set(
-                salt.base64EncodedString(),
-                forKey: "com.applocker.notesSalt"
-            )
-            NSUbiquitousKeyValueStore.default.synchronize()
+            kvStore.set(salt.base64EncodedString(), forKey: SecureNotesSync.notesSaltStoreKey)
+            kvStore.synchronize()
+            loadResolvedNotes()
             return true
         } catch {
             lastError = error.localizedDescription; return false
@@ -86,27 +101,57 @@ class SecureNotesManager: ObservableObject {
         saveNotes()
     }
 
-    private func loadNotes() {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        guard let data = try? Data(contentsOf: notesFileURL),
-              let decoded = try? decoder.decode([EncryptedNote].self, from: data) else {
-            notes = []; return
+    private func loadResolvedNotes() {
+        let localEnvelope = loadLocalEnvelope()
+        let remoteEnvelope = SecureNotesSync.decodeEnvelope(fromBase64: kvStore.string(forKey: SecureNotesSync.notesStoreKey))
+        guard let resolved = SecureNotesSync.preferredEnvelope(local: localEnvelope, remote: remoteEnvelope) else {
+            notes = []
+            return
         }
-        notes = decoded.sorted { $0.modifiedAt > $1.modifiedAt }
+
+        notes = resolved.notes.sorted { $0.modifiedAt > $1.modifiedAt }
+        persistEnvelope(resolved, syncRemote: remoteEnvelope?.updatedAt != resolved.updatedAt)
     }
 
     func saveNotes() {
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        if let data = try? encoder.encode(notes) {
-            try? data.write(to: notesFileURL)
-            // Sync encrypted notes to iCloud KV for iOS companion (read-only on iOS)
-            NSUbiquitousKeyValueStore.default.set(
-                data.base64EncodedString(),
-                forKey: "com.applocker.encryptedNotes"
-            )
-            NSUbiquitousKeyValueStore.default.synchronize()
+        let envelope = SecureNotesSync.makeEnvelope(notes: notes)
+        persistEnvelope(envelope)
+    }
+
+    private func refreshFromRemoteStore() {
+        guard let remoteEnvelope = SecureNotesSync.decodeEnvelope(fromBase64: kvStore.string(forKey: SecureNotesSync.notesStoreKey)) else {
+            return
+        }
+
+        let localEnvelope = loadLocalEnvelope()
+        guard let resolved = SecureNotesSync.preferredEnvelope(local: localEnvelope, remote: remoteEnvelope) else {
+            return
+        }
+
+        persistEnvelope(resolved, syncRemote: false)
+        if isUnlocked {
+            notes = resolved.notes.sorted { $0.modifiedAt > $1.modifiedAt }
+        }
+    }
+
+    private func loadLocalEnvelope() -> EncryptedNotesEnvelope? {
+        guard let data = try? Data(contentsOf: notesFileURL) else {
+            return nil
+        }
+        return try? SecureNotesSync.decodeEnvelope(from: data)
+    }
+
+    private func persistEnvelope(_ envelope: EncryptedNotesEnvelope, syncRemote: Bool = true) {
+        do {
+            let data = try SecureNotesSync.encodeEnvelope(envelope)
+            try data.write(to: notesFileURL, options: .atomic)
+            if syncRemote {
+                kvStore.set(data.base64EncodedString(), forKey: SecureNotesSync.notesStoreKey)
+                kvStore.synchronize()
+            }
+        } catch {
+            lastError = "Failed to save notes: \(error.localizedDescription)"
+            AppLogger.cloud.error("Failed to persist secure notes envelope: \(error.localizedDescription, privacy: .public)")
         }
     }
 }

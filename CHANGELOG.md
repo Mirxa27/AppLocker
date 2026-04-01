@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- SwiftPM unit test coverage for schedule evaluation, legacy schedule decoding, CryptoKit encryption, tamper rejection, and PBKDF2 derivation
+- Explicit shared Xcode schemes generated from `project.yml` for both the macOS app and the iOS companion
+- Reproducible App Store archive/export automation for the iOS IPA and macOS PKG via `scripts/publish-appstore.sh`
+
+### Changed
+
+- Schedule windows now support two real policies: block during the selected window or allow only during the selected window
+- macOS schedule editing UI now exposes the active schedule policy instead of silently treating every schedule as a block window
+- Release automation now archives the real Xcode app bundle instead of rebuilding a hand-rolled app from `swift build`
+- Quick-start and release documentation now match the generated Xcode workflow and current release scripts
+- iOS file vault keys are now rewrapped during PIN changes so encrypted files survive credential rotation
+
+### Fixed
+
+- Filled the missing app icon variants referenced by `AppIcon.appiconset`
+- Removed the unfinished allow-list shortcut in schedule template application
+- Exported backup metadata now uses the current app version instead of a hardcoded `3.0`
+- iOS file locker resets now delete encrypted payloads before clearing the in-memory metadata
+
 ## [3.6.0] - 2026-03-02
 
 ### Changed
@@ -87,11 +108,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Requires macOS 13.0 (Ventura) or later
 - Needs Accessibility permissions
 
-### Notes
-
-- Known issue: App blocking may not work reliably in all scenarios
-- Requires manual testing of blocking functionality
-
 ## [2.0.0] - 2025-02-10
 
 ### Added
@@ -111,7 +127,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simple UI
 - Activity logging
 
-[Unreleased]: https://github.com/Mirxa27/AppLocker/compare/v3.0.0...HEAD
+[Unreleased]: https://github.com/Mirxa27/AppLocker/compare/v3.6.0...HEAD
+[3.6.0]: https://github.com/Mirxa27/AppLocker/releases/tag/v3.6.0
 [3.0.0]: https://github.com/Mirxa27/AppLocker/releases/tag/v3.0.0
 [2.0.0]: https://github.com/Mirxa27/AppLocker/releases/tag/v2.0.0
 [1.0.0]: https://github.com/Mirxa27/AppLocker/releases/tag/v1.0.0

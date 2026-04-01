@@ -1,5 +1,6 @@
 import CloudKit
 import Foundation
+import Security
 import SwiftUI
 
 #if os(iOS)
@@ -13,8 +14,9 @@ final class CloudKitManager: ObservableObject {
     @Published private(set) var iCloudAvailable = false
     @Published private(set) var lastSyncError: String?
 
-    private let container = CKContainer(identifier: "iCloud.com.mirxa.AppLocker")
-    private var db: CKDatabase { container.privateCloudDatabase }
+    private let cloudKitConfigured: Bool
+    private let container: CKContainer?
+    private var db: CKDatabase? { container?.privateCloudDatabase }
     private var accountObserver: NSObjectProtocol?
 
     private enum RecordType {
@@ -34,6 +36,16 @@ final class CloudKitManager: ObservableObject {
     }
 
     private init() {
+        cloudKitConfigured = Self.hasCloudKitEntitlement
+        guard cloudKitConfigured else {
+            iCloudAvailable = false
+            lastSyncError = CloudKitManagerError.cloudKitNotConfigured.errorDescription
+            container = nil
+            return
+        }
+
+        container = CKContainer.default()
+
         accountObserver = NotificationCenter.default.addObserver(
             forName: .CKAccountChanged,
             object: nil,
@@ -56,6 +68,12 @@ final class CloudKitManager: ObservableObject {
     }
 
     func checkiCloudStatus() async {
+        guard cloudKitConfigured else {
+            iCloudAvailable = false
+            lastSyncError = CloudKitManagerError.cloudKitNotConfigured.errorDescription
+            return
+        }
+
         do {
             let status = try await fetchAccountStatus()
             iCloudAvailable = (status == .available)
@@ -243,6 +261,9 @@ final class CloudKitManager: ObservableObject {
     // MARK: - Internals
 
     private func ensureCloudAvailable() async throws {
+        guard cloudKitConfigured else {
+            throw CloudKitManagerError.cloudKitNotConfigured
+        }
         if !iCloudAvailable {
             await checkiCloudStatus()
         }
@@ -252,7 +273,10 @@ final class CloudKitManager: ObservableObject {
     }
 
     private func fetchAccountStatus() async throws -> CKAccountStatus {
-        try await withCheckedThrowingContinuation { continuation in
+        guard let container else {
+            throw CloudKitManagerError.cloudKitNotConfigured
+        }
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<CKAccountStatus, Error>) in
             container.accountStatus { status, error in
                 if let error {
                     continuation.resume(throwing: error)
@@ -264,7 +288,10 @@ final class CloudKitManager: ObservableObject {
     }
 
     private func save(_ record: CKRecord) async throws -> CKRecord {
-        try await withCheckedThrowingContinuation { continuation in
+        guard let db else {
+            throw CloudKitManagerError.cloudKitNotConfigured
+        }
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<CKRecord, Error>) in
             db.save(record) { saved, error in
                 if let error {
                     continuation.resume(throwing: error)
@@ -278,7 +305,10 @@ final class CloudKitManager: ObservableObject {
     }
 
     private func fetchRecord(recordID: CKRecord.ID) async throws -> CKRecord {
-        try await withCheckedThrowingContinuation { continuation in
+        guard let db else {
+            throw CloudKitManagerError.cloudKitNotConfigured
+        }
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<CKRecord, Error>) in
             db.fetch(withRecordID: recordID) { record, error in
                 if let error {
                     continuation.resume(throwing: error)
@@ -298,7 +328,10 @@ final class CloudKitManager: ObservableObject {
         ascending: Bool,
         limit: Int
     ) async throws -> [CKRecord] {
-        try await withCheckedThrowingContinuation { continuation in
+        guard let db else {
+            throw CloudKitManagerError.cloudKitNotConfigured
+        }
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<[CKRecord], Error>) in
             let query = CKQuery(recordType: recordType, predicate: predicate)
             query.sortDescriptors = [NSSortDescriptor(key: sortField, ascending: ascending)]
 
@@ -322,14 +355,17 @@ final class CloudKitManager: ObservableObject {
                 }
             }
 
-            self.db.add(operation)
+            db.add(operation)
         }
     }
 
     private func deleteRecords(ids: [CKRecord.ID]) async throws {
         guard !ids.isEmpty else { return }
+        guard let db else {
+            throw CloudKitManagerError.cloudKitNotConfigured
+        }
 
-        try await withCheckedThrowingContinuation { continuation in
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             let operation = CKModifyRecordsOperation(recordsToSave: nil, recordIDsToDelete: ids)
             operation.savePolicy = .ifServerRecordUnchanged
             operation.modifyRecordsResultBlock = { result in
@@ -340,7 +376,7 @@ final class CloudKitManager: ObservableObject {
                     continuation.resume(throwing: error)
                 }
             }
-            self.db.add(operation)
+            db.add(operation)
         }
     }
 
@@ -368,7 +404,10 @@ final class CloudKitManager: ObservableObject {
     }
 
     private func fetchSubscription(subscriptionID: String) async throws -> CKSubscription {
-        try await withCheckedThrowingContinuation { continuation in
+        guard let db else {
+            throw CloudKitManagerError.cloudKitNotConfigured
+        }
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<CKSubscription, Error>) in
             db.fetch(withSubscriptionID: subscriptionID) { subscription, error in
                 if let error {
                     continuation.resume(throwing: error)
@@ -382,7 +421,10 @@ final class CloudKitManager: ObservableObject {
     }
 
     private func saveSubscription(_ subscription: CKSubscription) async throws -> CKSubscription {
-        try await withCheckedThrowingContinuation { continuation in
+        guard let db else {
+            throw CloudKitManagerError.cloudKitNotConfigured
+        }
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<CKSubscription, Error>) in
             db.save(subscription) { saved, error in
                 if let error {
                     continuation.resume(throwing: error)
@@ -411,11 +453,46 @@ final class CloudKitManager: ObservableObject {
         let normalized = String(scalarView)
         return String(normalized.prefix(64))
     }
+
+    private static var hasCloudKitEntitlement: Bool {
+        #if os(iOS)
+        #if targetEnvironment(simulator)
+        return false
+        #else
+        return true
+        #endif
+        #else
+        guard let task = SecTaskCreateFromSelf(nil) else { return false }
+
+        let keys: [CFString] = [
+            "com.apple.developer.icloud-container-identifiers" as CFString,
+            "com.apple.developer.ubiquity-container-identifiers" as CFString,
+            "com.apple.developer.icloud-services" as CFString
+        ]
+
+        for key in keys {
+            guard let value = SecTaskCopyValueForEntitlement(task, key, nil) else { continue }
+
+            if let array = value as? [Any], !array.isEmpty {
+                return true
+            }
+            if let string = value as? String, !string.isEmpty {
+                return true
+            }
+            if let bool = value as? Bool, bool {
+                return true
+            }
+        }
+
+        return false
+        #endif
+    }
 }
 
 enum CloudKitManagerError: LocalizedError {
     case iCloudUnavailable
     case invalidCloudKitResponse
+    case cloudKitNotConfigured
 
     var errorDescription: String? {
         switch self {
@@ -423,6 +500,8 @@ enum CloudKitManagerError: LocalizedError {
             return "iCloud account is unavailable for CloudKit sync"
         case .invalidCloudKitResponse:
             return "CloudKit returned an unexpected empty response"
+        case .cloudKitNotConfigured:
+            return "CloudKit is not configured for this build"
         }
     }
 }

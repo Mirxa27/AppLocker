@@ -39,12 +39,86 @@ struct LockedAppInfo: Codable, Identifiable, Hashable {
 
 // MARK: - Lock Schedule
 struct LockSchedule: Codable, Hashable {
+    enum Behavior: String, Codable, CaseIterable, Identifiable {
+        case blockDuringWindow
+        case allowDuringWindow
+
+        var id: String { rawValue }
+
+        var title: String {
+            switch self {
+            case .blockDuringWindow:
+                return "Block In Window"
+            case .allowDuringWindow:
+                return "Allow In Window"
+            }
+        }
+
+        var shortTitle: String {
+            switch self {
+            case .blockDuringWindow:
+                return "Scheduled Block"
+            case .allowDuringWindow:
+                return "Scheduled Allow"
+            }
+        }
+
+        var explanation: String {
+            switch self {
+            case .blockDuringWindow:
+                return "This app is blocked only during the selected time window."
+            case .allowDuringWindow:
+                return "This app is allowed only during the selected time window and blocked outside it."
+            }
+        }
+    }
+
     var enabled: Bool = false
     var startHour: Int = 0
     var startMinute: Int = 0
     var endHour: Int = 23
     var endMinute: Int = 59
     var activeDays: Set<Int> = [1, 2, 3, 4, 5, 6, 7]
+    var behavior: Behavior = .blockDuringWindow
+
+    enum CodingKeys: String, CodingKey {
+        case enabled
+        case startHour
+        case startMinute
+        case endHour
+        case endMinute
+        case activeDays
+        case behavior
+    }
+
+    init(
+        enabled: Bool = false,
+        startHour: Int = 0,
+        startMinute: Int = 0,
+        endHour: Int = 23,
+        endMinute: Int = 59,
+        activeDays: Set<Int> = [1, 2, 3, 4, 5, 6, 7],
+        behavior: Behavior = .blockDuringWindow
+    ) {
+        self.enabled = enabled
+        self.startHour = startHour
+        self.startMinute = startMinute
+        self.endHour = endHour
+        self.endMinute = endMinute
+        self.activeDays = activeDays
+        self.behavior = behavior
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        enabled = try container.decodeIfPresent(Bool.self, forKey: .enabled) ?? false
+        startHour = try container.decodeIfPresent(Int.self, forKey: .startHour) ?? 0
+        startMinute = try container.decodeIfPresent(Int.self, forKey: .startMinute) ?? 0
+        endHour = try container.decodeIfPresent(Int.self, forKey: .endHour) ?? 23
+        endMinute = try container.decodeIfPresent(Int.self, forKey: .endMinute) ?? 59
+        activeDays = try container.decodeIfPresent(Set<Int>.self, forKey: .activeDays) ?? [1, 2, 3, 4, 5, 6, 7]
+        behavior = try container.decodeIfPresent(Behavior.self, forKey: .behavior) ?? .blockDuringWindow
+    }
 
     var startTimeFormatted: String {
         String(format: "%02d:%02d", startHour, startMinute)
@@ -54,14 +128,12 @@ struct LockSchedule: Codable, Hashable {
         String(format: "%02d:%02d", endHour, endMinute)
     }
 
-    func isActiveNow() -> Bool {
-        guard enabled else { return true }
-        let calendar = Calendar.current
-        let now = Date()
-        let weekday = calendar.component(.weekday, from: now)
+    func isWithinScheduledWindow(at date: Date = Date(), calendar: Calendar = .current) -> Bool {
+        guard enabled else { return false }
+        let weekday = calendar.component(.weekday, from: date)
         guard activeDays.contains(weekday) else { return false }
 
-        let currentMinutes = calendar.component(.hour, from: now) * 60 + calendar.component(.minute, from: now)
+        let currentMinutes = calendar.component(.hour, from: date) * 60 + calendar.component(.minute, from: date)
         let startMinutes = startHour * 60 + startMinute
         let endMinutes = endHour * 60 + endMinute
 
@@ -69,6 +141,31 @@ struct LockSchedule: Codable, Hashable {
             return currentMinutes >= startMinutes && currentMinutes <= endMinutes
         } else {
             return currentMinutes >= startMinutes || currentMinutes <= endMinutes
+        }
+    }
+
+    func shouldBlock(at date: Date = Date(), calendar: Calendar = .current) -> Bool {
+        guard enabled else { return true }
+        let isWithinWindow = isWithinScheduledWindow(at: date, calendar: calendar)
+
+        switch behavior {
+        case .blockDuringWindow:
+            return isWithinWindow
+        case .allowDuringWindow:
+            return !isWithinWindow
+        }
+    }
+
+    func isActiveNow() -> Bool {
+        shouldBlock(at: Date(), calendar: .current)
+    }
+
+    var scheduleSummary: String {
+        switch behavior {
+        case .blockDuringWindow:
+            return "Blocks \(startTimeFormatted)-\(endTimeFormatted)"
+        case .allowDuringWindow:
+            return "Allows \(startTimeFormatted)-\(endTimeFormatted)"
         }
     }
 }
@@ -243,4 +340,125 @@ struct EncryptedNote: Codable, Identifiable {
     var encryptedBody: Data         // AES-GCM combined (nonce + ciphertext + tag)
     let createdAt: Date
     var modifiedAt: Date
+}
+
+struct EncryptedNotesEnvelope: Codable {
+    var updatedAt: Date
+    var notes: [EncryptedNote]
+}
+
+// MARK: - Shared Design System
+
+enum AppDesign {
+    static let accent = Color(red: 0.11, green: 0.50, blue: 0.95)
+    static let accentSecondary = Color(red: 0.17, green: 0.71, blue: 0.91)
+    static let success = Color(red: 0.19, green: 0.66, blue: 0.38)
+    static let warning = Color(red: 0.95, green: 0.58, blue: 0.21)
+    static let danger = Color(red: 0.85, green: 0.25, blue: 0.28)
+
+    static var backgroundGradient: LinearGradient {
+        LinearGradient(
+            colors: [
+                Color(red: 0.07, green: 0.10, blue: 0.16),
+                Color(red: 0.08, green: 0.18, blue: 0.28),
+                Color(red: 0.10, green: 0.13, blue: 0.21),
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    static var panelGradient: LinearGradient {
+        LinearGradient(
+            colors: [
+                Color.white.opacity(0.22),
+                Color.white.opacity(0.10),
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+}
+
+struct AppScreenBackground: ViewModifier {
+    func body(content: Content) -> some View {
+        content.background {
+            AppDesign.backgroundGradient
+                .ignoresSafeArea()
+        }
+    }
+}
+
+struct AppSurfaceModifier: ViewModifier {
+    let padding: CGFloat
+    let cornerRadius: CGFloat
+
+    func body(content: Content) -> some View {
+        content
+            .padding(padding)
+            .background {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(AppDesign.panelGradient)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            .stroke(Color.white.opacity(0.18), lineWidth: 1)
+                    }
+            }
+    }
+}
+
+struct AppStatusBadge: View {
+    let text: String
+    let color: Color
+
+    var body: some View {
+        Text(text)
+            .font(.caption.weight(.semibold))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(color.opacity(0.18), in: Capsule())
+            .foregroundStyle(color)
+    }
+}
+
+struct AppMetricCard: View {
+    let title: String
+    let value: String
+    let subtitle: String
+    let icon: String
+    let color: Color
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(color)
+                .frame(width: 34, height: 34)
+                .background(color.opacity(0.18), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(value)
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(.primary)
+                Text(subtitle)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+        }
+        .appSurface(padding: 14, cornerRadius: 14)
+    }
+}
+
+extension View {
+    func appScreenBackground() -> some View {
+        modifier(AppScreenBackground())
+    }
+
+    func appSurface(padding: CGFloat = 16, cornerRadius: CGFloat = 16) -> some View {
+        modifier(AppSurfaceModifier(padding: padding, cornerRadius: cornerRadius))
+    }
 }

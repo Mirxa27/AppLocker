@@ -18,7 +18,10 @@ class iOSAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterD
     func application(_ app: UIApplication,
                      didFinishLaunchingWithOptions opts: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
-        NotificationManager.shared.requestNotificationPermissions()
+        // Request notification permissions after a short delay to avoid blocking launch
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            NotificationManager.shared.requestNotificationPermissions()
+        }
         NSUbiquitousKeyValueStore.default.synchronize()
         Task { @MainActor in
             KVStoreManager.shared.decodeAllKeys()

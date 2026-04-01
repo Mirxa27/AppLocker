@@ -1,124 +1,67 @@
-# Quick Start - Building & Releasing
+# Quick Start
 
-## 🚀 Quick Commands
-
-```bash
-# Build for development
-make build
-
-# Build release version (creates DMG)
-make release
-
-# Install to /Applications
-make install
-
-# Print release tagging instructions
-make tag-release VERSION=3.1
-```
-
-## 📦 Creating a Release
-
-### Option 1: Automated (GitHub Actions) - RECOMMENDED
+## Daily Commands
 
 ```bash
-# 1. Commit your changes
-git add -A
-git commit -m "Release v3.1"
-git push origin main
+# Regenerate the shared Xcode project
+make generate-project
 
-# 2. Create and push tag (version derived from tag)
-git tag -a v3.1 -m "Release v3.1"
-git push origin v3.1
-```
+# Build the macOS app
+make build-macos
 
-GitHub Actions will automatically:
-
-- ✅ Build the app
-- ✅ Create DMG installer
-- ✅ Create GitHub Release
-- ✅ Attach DMG to release
-
-### Option 2: Manual Build
-
-```bash
-# Build locally
-make release
-
-# Find artifacts in release/
-ls release/
-# AppLocker.app
-# AppLocker-3.0.dmg
-```
-
-## 🔧 Development
-
-```bash
-# Build and run
-make run
-
-# Clean build artifacts
-make clean
-
-# Run tests
+# Run unit tests
 make test
+
+# Package an unsigned local release
+make release
+
+# Export App Store artifacts (.ipa + .pkg)
+make publish-appstore
 ```
 
-## 📋 Files Added
+## iOS Companion Build
 
-- **Makefile** - Quick commands
-- **scripts/build-release.sh** - Build script
-- **.github/workflows/build.yml** - CI/CD automation
-- **RELEASE.md** - Detailed release guide
-- **CHANGELOG.md** - Version history
+```bash
+make build-ios
+```
 
-## 🏷️ Version Format
+The iOS build uses the local iPhone Simulator SDK. If Xcode reports that no compatible simulator runtime is available for the active SDK, install the matching iOS runtime from Xcode Components and rerun the command.
 
-We use Semantic Versioning: `MAJOR.MINOR.PATCH`
+## Release Artifacts
 
-- **MAJOR**: Breaking changes
-- **MINOR**: New features (backwards compatible)
-- **PATCH**: Bug fixes
+`make release` produces:
 
-Example: `3.1.0`
+1. `release/AppLocker.app`
+2. `release/AppLocker.xcarchive`
+3. `release/AppLocker-<marketing-version>.dmg`
 
-## ✨ What Gets Created
+`make release-signed` produces the same artifacts in `release/signed/` and applies a Developer ID signature. If `APPLE_ID`, `APPLE_TEAM_ID`, and `APPLE_ASC_PASSWORD` are set, the DMG is notarized and stapled.
 
-When you run `make release`:
+`make publish-appstore` produces:
 
-1. **release/AppLocker.app** - Signed app bundle (~1.8 MB)
-2. **release/AppLocker-X.X.dmg** - DMG installer (~5 MB)
+1. `dist/publish/AppLockerCompanion.xcarchive`
+2. `dist/publish/ios-appstore/AppLockerCompanion.ipa`
+3. `dist/publish/AppLocker-mac-appstore.xcarchive`
+4. `dist/publish/mac-appstore/AppLocker.pkg`
 
-## 🌐 GitHub Repository
+## Troubleshooting
 
-**URL**: https://github.com/Mirxa27/AppLocker
-
-**Latest Release**: Check the "Releases" tab on GitHub
-
-## 🆘 Troubleshooting
-
-### Build fails
+### Clean everything
 
 ```bash
 make clean
-make release
 ```
 
-### Signing issues
+### Verify the generated project
 
 ```bash
-codesign --remove-signature AppLocker.app
-codesign --force --deep --sign - AppLocker.app
+xcodegen generate --spec project.yml
+xcodebuild -project AppLocker.xcodeproj -list
 ```
 
-### DMG won't mount
+### Verify signatures on a packaged build
 
 ```bash
-# Recreate manually
-hdiutil create -volname "AppLocker" -srcfolder AppLocker.app -ov -format UDZO AppLocker.dmg
+codesign --verify --deep --strict release/AppLocker.app
+spctl --assess --type execute release/AppLocker.app
 ```
-
-## 📚 More Info
-
-- Full release guide: [RELEASE.md](RELEASE.md)
-- Version history: [CHANGELOG.md](CHANGELOG.md)
-- CI/CD config: [.github/workflows/build.yml](.github/workflows/build.yml)

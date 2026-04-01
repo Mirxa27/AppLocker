@@ -1,62 +1,45 @@
-# AppLocker Makefile
-# Quick commands for building and releasing
+.PHONY: all generate-project build build-macos build-ios release release-signed publish-appstore clean test install help
 
-.PHONY: all build release clean test install
-
-# Default target
 all: build
 
-# Build debug version
-build:
-	swift build
+generate-project:
+	xcodegen generate --spec /Users/abdullahmirxa/Documents/GitHub/AppLocker/project.yml
 
-# Build release version
-release:
-	@./scripts/build-release.sh
+build: build-macos
 
-# Clean build artifacts
-clean:
-	swift package clean
-	rm -rf .build/release
-	rm -rf release/
+build-macos: generate-project
+	xcodebuild -project /Users/abdullahmirxa/Documents/GitHub/AppLocker/AppLocker.xcodeproj -scheme AppLocker -configuration Debug -destination 'platform=macOS,arch=arm64' CODE_SIGNING_ALLOWED=NO build
 
-# Run tests
+build-ios: generate-project
+	xcodebuild -project /Users/abdullahmirxa/Documents/GitHub/AppLocker/AppLocker.xcodeproj -scheme AppLockerCompanion -configuration Debug -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build
+
 test:
-	swift test
+	swift test --package-path /Users/abdullahmirxa/Documents/GitHub/AppLocker
 
-# Install locally (copy to /Applications)
+release: generate-project
+	@/Users/abdullahmirxa/Documents/GitHub/AppLocker/scripts/build-release.sh
+
+release-signed: generate-project
+	@/Users/abdullahmirxa/Documents/GitHub/AppLocker/scripts/release-signed.sh
+
+publish-appstore: generate-project
+	@/Users/abdullahmirxa/Documents/GitHub/AppLocker/scripts/publish-appstore.sh
+
 install: release
-	@echo "Installing to /Applications..."
-	@cp -R release/AppLocker.app /Applications/
-	@echo "✅ Installed to /Applications/AppLocker.app"
+	cp -R /Users/abdullahmirxa/Documents/GitHub/AppLocker/release/AppLocker.app /Applications/
 
-# Print instructions for tagging a new release
-# Usage: make tag-release VERSION=3.1
-tag-release:
-	@if [ -z "$(VERSION)" ]; then \
-		echo "Usage: make tag-release VERSION=3.1"; \
-		exit 1; \
-	fi
-	@echo "Steps to release v$(VERSION):"
-	@echo "  1. Commit changes: git add -A && git commit -m 'Release v$(VERSION)'"
-	@echo "  2. Create tag: git tag -a v$(VERSION) -m 'Release v$(VERSION)'"
-	@echo "  3. Push: git push origin main && git push origin v$(VERSION)"
-	@echo "  4. GitHub Actions will build and create a release with the DMG"
+clean:
+	swift package clean --package-path /Users/abdullahmirxa/Documents/GitHub/AppLocker
+	rm -rf /Users/abdullahmirxa/Documents/GitHub/AppLocker/release
 
-# Quick run for development
-run: build
-	@echo "Running AppLocker..."
-	@./AppLocker.app/Contents/MacOS/AppLocker &
-
-# Show help
 help:
-	@echo "AppLocker Makefile Commands:"
-	@echo ""
-	@echo "  make build      - Build debug version"
-	@echo "  make release    - Build and package release version"
-	@echo "  make clean      - Clean build artifacts"
-	@echo "  make test       - Run tests"
-	@echo "  make install    - Install to /Applications"
-	@echo "  make tag-release - Print release tagging instructions (e.g., make tag-release VERSION=3.1)"
-	@echo "  make run        - Build and run for development"
-	@echo "  make help       - Show this help"
+	@echo "AppLocker Makefile commands:"
+	@echo "  make generate-project  Regenerate the Xcode project from project.yml"
+	@echo "  make build-macos       Build the macOS app with Xcode"
+	@echo "  make build-ios         Build the iOS companion for iOS Simulator"
+	@echo "  make test              Run SwiftPM unit tests"
+	@echo "  make release           Archive and package an unsigned local macOS release"
+	@echo "  make release-signed    Archive, sign, and optionally notarize a macOS release"
+	@echo "  make publish-appstore  Archive and export iOS + macOS App Store artifacts"
+	@echo "  make install           Copy the packaged app into /Applications"
+	@echo "  make clean             Remove package and release artifacts"

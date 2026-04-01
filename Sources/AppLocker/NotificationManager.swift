@@ -90,9 +90,9 @@ class NotificationManager: ObservableObject {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
             DispatchQueue.main.async {
                 if granted {
-                    print("Notification permissions granted")
+                    AppLogger.notifications.info("Notification permissions granted")
                 } else if let error = error {
-                    print("Notification permission error: \(error.localizedDescription)")
+                    AppLogger.notifications.error("Notification permission error: \(error.localizedDescription, privacy: .public)")
                 }
             }
         }
@@ -129,7 +129,7 @@ class NotificationManager: ObservableObject {
         
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
-                print("Failed to send notification: \(error.localizedDescription)")
+                AppLogger.notifications.error("Failed to send blocked-app notification: \(error.localizedDescription, privacy: .public)")
             }
         }
         
@@ -426,4 +426,3 @@ class NotificationManager: ObservableObject {
         UserDefaults.standard.set(crossDeviceEnabled, forKey: crossDeviceEnabledKey)
     }
 }
-

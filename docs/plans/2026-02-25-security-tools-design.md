@@ -222,7 +222,7 @@ Same salt/key pattern as vault: `"com.applocker.notesSalt"` in Keychain. `Secure
 ### UI
 - `NavigationSplitView`-style: left = note list (title + date), right = `TextEditor`
 - Toolbar: New Note, Delete Note
-- Locked state: shows "Unlock Notes" placeholder
+- Locked state: shows the "Unlock Notes" gate
 - Note title editable inline in the list
 
 ---

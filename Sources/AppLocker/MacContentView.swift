@@ -74,7 +74,7 @@ struct MacContentView: View {
     }
 }
 
-// MARK: - Setup Wizard (Gap 1)
+// MARK: - Setup Wizard
 
 struct SetupWizardView: View {
     @ObservedObject var authManager = AuthenticationManager.shared
@@ -84,82 +84,107 @@ struct SetupWizardView: View {
     @State private var step = 0
 
     var body: some View {
-        VStack(spacing: 30) {
-            if step == 0 {
-                Image(systemName: "lock.shield.fill")
-                    .font(.system(size: 80))
-                    .foregroundColor(.blue)
+        ZStack {
+            AppDesign.backgroundGradient
+                .ignoresSafeArea()
 
-                Text("Welcome to AppLocker")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
+            VStack(spacing: 22) {
+                if step == 0 {
+                    Image(systemName: "lock.shield.fill")
+                        .font(.system(size: 62, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 112, height: 112)
+                        .background(
+                            LinearGradient(
+                                colors: [AppDesign.accent, AppDesign.accentSecondary],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            in: RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        )
 
-                Text("Protect your apps with a passcode and biometrics.")
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .frame(width: 350)
-
-                Button("Get Started") {
-                    withAnimation { step = 1 }
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-            } else {
-                Image(systemName: "key.fill")
-                    .font(.system(size: 60))
-                    .foregroundColor(.blue)
-
-                Text("Create Your Passcode")
-                    .font(.title)
-                    .fontWeight(.bold)
-
-                VStack(spacing: 15) {
-                    SecureField("Passcode (min 4 characters)", text: $passcode)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .frame(width: 280)
-
-                    SecureField("Confirm Passcode", text: $confirmPasscode)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .frame(width: 280)
-                        .onSubmit(createPasscode)
-
-                    if let error = error {
-                        Text(error)
-                            .foregroundColor(.red)
-                            .font(.caption)
-                    }
-
-                    Button("Create Passcode") {
-                        createPasscode()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    .disabled(passcode.count < 4 || confirmPasscode.isEmpty)
-                }
-
-                Divider().frame(width: 280)
-
-                VStack(spacing: 8) {
-                    Text("AppLocker needs Accessibility permissions to block apps.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    Text("Welcome to AppLocker")
+                        .font(.system(size: 34, weight: .bold))
                         .multilineTextAlignment(.center)
 
-                    Button("Grant Accessibility Access") {
-                        AppMonitor.shared.requestAccessibilityPermissions()
-                    }
-                    .buttonStyle(.bordered)
-                }
+                    Text("Protect your apps with passcode lock, biometrics, and real-time security controls.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 420)
 
-                if authManager.canUseBiometrics() {
-                    Text("Touch ID / Face ID will be available after setup.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    HStack(spacing: 10) {
+                        AppStatusBadge(text: "Mac Security", color: AppDesign.success)
+                        AppStatusBadge(text: "Remote Control", color: AppDesign.accent)
+                    }
+
+                    Button("Get Started") {
+                        withAnimation(.easeInOut) {
+                            step = 1
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(AppDesign.accent)
+                    .controlSize(.large)
+                } else {
+                    Image(systemName: "key.fill")
+                        .font(.system(size: 50, weight: .bold))
+                        .foregroundStyle(AppDesign.accent)
+
+                    Text("Create Your Passcode")
+                        .font(.title.weight(.bold))
+
+                    VStack(spacing: 12) {
+                        SecureField("Passcode (min 4 characters)", text: $passcode)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(maxWidth: 320)
+
+                        SecureField("Confirm Passcode", text: $confirmPasscode)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(maxWidth: 320)
+                            .onSubmit(createPasscode)
+
+                        if let error = error {
+                            Text(error)
+                                .foregroundStyle(AppDesign.danger)
+                                .font(.caption)
+                        }
+
+                        Button("Create Passcode") {
+                            createPasscode()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(AppDesign.accent)
+                        .controlSize(.large)
+                        .disabled(passcode.count < 4 || confirmPasscode.isEmpty)
+                    }
+
+                    Divider().padding(.vertical, 2)
+
+                    VStack(spacing: 8) {
+                        Text("AppLocker needs Accessibility permission to monitor and block apps.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+
+                        Button("Grant Accessibility Access") {
+                            AppMonitor.shared.requestAccessibilityPermissions()
+                        }
+                        .buttonStyle(.bordered)
+                    }
+
+                    if authManager.canUseBiometrics() {
+                        Text("Touch ID / Face ID will be available after setup.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
+            .padding(28)
+            .frame(maxWidth: 560)
+            .appSurface(padding: 26, cornerRadius: 24)
+            .padding(28)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(VisualEffectView(material: .hudWindow, blendingMode: .behindWindow))
     }
 
     private func createPasscode() {
@@ -189,53 +214,68 @@ struct LockScreen: View {
     let onUnlock: () -> Void
 
     var body: some View {
-        VStack(spacing: 30) {
-            Image(systemName: "lock.shield.fill")
-                .font(.system(size: 80))
-                .foregroundColor(.blue)
-                .padding(.bottom, 20)
+        ZStack {
+            AppDesign.backgroundGradient
+                .ignoresSafeArea()
 
-            Text("AppLocker")
-                .font(.largeTitle)
-                .fontWeight(.bold)
+            VStack(spacing: 20) {
+                Image(systemName: "lock.shield.fill")
+                    .font(.system(size: 54, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 98, height: 98)
+                    .background(
+                        LinearGradient(
+                            colors: [AppDesign.accent, AppDesign.accentSecondary],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        in: RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    )
 
-            VStack(spacing: 15) {
-                SecureField("Enter Passcode", text: $password)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .frame(width: 250)
-                    .onSubmit(onUnlock)
-                    .modifier(ShakeEffect(animatableData: CGFloat(shake)))
+                Text("AppLocker")
+                    .font(.largeTitle.weight(.bold))
 
-                if let error = error {
-                    Text(error)
-                        .foregroundColor(.red)
-                        .font(.caption)
-                }
+                VStack(spacing: 12) {
+                    SecureField("Enter Passcode", text: $password)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(maxWidth: 300)
+                        .onSubmit(onUnlock)
+                        .modifier(ShakeEffect(animatableData: CGFloat(shake)))
 
-                Button("Unlock") {
-                    onUnlock()
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .disabled(password.isEmpty)
-            }
-
-            if AuthenticationManager.shared.canUseBiometrics() {
-                Button {
-                    AuthenticationManager.shared.authenticateWithBiometrics { success, error in
-                        if !success {
-                            self.error = error
-                        }
+                    if let error = error {
+                        Text(error)
+                            .foregroundStyle(AppDesign.danger)
+                            .font(.caption)
                     }
-                } label: {
-                    Label("Use Touch ID / Face ID", systemImage: "touchid")
+
+                    Button("Unlock") {
+                        onUnlock()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(AppDesign.accent)
+                    .controlSize(.large)
+                    .disabled(password.isEmpty)
                 }
-                .buttonStyle(.borderless)
-                .padding(.top)
+
+                if AuthenticationManager.shared.canUseBiometrics() {
+                    Button {
+                        AuthenticationManager.shared.authenticateWithBiometrics { success, error in
+                            if !success {
+                                self.error = error
+                            }
+                        }
+                    } label: {
+                        Label("Use Touch ID / Face ID", systemImage: "touchid")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                }
             }
+            .padding(28)
+            .frame(maxWidth: 520)
+            .appSurface(padding: 26, cornerRadius: 24)
+            .padding(28)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(VisualEffectView(material: .hudWindow, blendingMode: .behindWindow))
     }
 }
 
@@ -248,30 +288,33 @@ struct MainInterface: View {
     @State private var hasAccessibility = AppMonitor.shared.hasAccessibilityPermissions()
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Header
-            HStack {
-                Text("AppLocker")
-                    .font(.title2)
-                    .fontWeight(.bold)
+        VStack(spacing: 10) {
+            HStack(spacing: 12) {
+                Image(systemName: "lock.shield.fill")
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 36, height: 36)
+                    .background(AppDesign.accent, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("AppLocker Control Center")
+                        .font(.headline.weight(.bold))
+                    Text("Manage lock policies, monitoring, and security events")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: 10)
 
                 if !hasAccessibility {
                     Button {
                         appMonitor.requestAccessibilityPermissions()
                     } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundColor(.orange)
-                            Text("Accessibility Required")
-                                .font(.caption)
-                                .foregroundColor(.orange)
-                        }
+                        AppStatusBadge(text: "Accessibility Required", color: AppDesign.warning)
                     }
                     .buttonStyle(.plain)
                     .help("Click to grant accessibility permissions")
                 }
-
-                Spacer()
 
                 Toggle("Monitoring", isOn: Binding(
                     get: { appMonitor.isMonitoring },
@@ -281,6 +324,12 @@ struct MainInterface: View {
                     }
                 ))
                 .toggleStyle(.switch)
+                .labelsHidden()
+
+                AppStatusBadge(
+                    text: appMonitor.isMonitoring ? "Monitoring On" : "Monitoring Off",
+                    color: appMonitor.isMonitoring ? AppDesign.success : AppDesign.warning
+                )
 
                 Button {
                     AuthenticationManager.shared.logout()
@@ -289,53 +338,60 @@ struct MainInterface: View {
                 }
                 .help("Lock AppLocker")
             }
-            .padding()
-            .background(Color(nsColor: .windowBackgroundColor))
+            .appSurface(padding: 14, cornerRadius: 16)
 
-            Divider()
-
-            // Content
             HSplitView {
-                // Sidebar
-                VStack(alignment: .leading, spacing: 4) {
-                    SidebarButton(title: "Locked Apps",      icon: "lock.app.dashed",                  isSelected: selectedTab == 0)  { selectedTab = 0  }
-                    SidebarButton(title: "Add Apps",         icon: "plus.app",                         isSelected: selectedTab == 1)  { selectedTab = 1  }
-                    SidebarButton(title: "Stats",            icon: "chart.bar",                        isSelected: selectedTab == 2)  { selectedTab = 2  }
-                    SidebarButton(title: "Settings",         icon: "gear",                             isSelected: selectedTab == 3)  { selectedTab = 3  }
-                    SidebarButton(title: "Activity Log",     icon: "list.bullet.rectangle",            isSelected: selectedTab == 4)  { selectedTab = 4  }
-                    SidebarButton(title: "Intruder Photos",  icon: "person.crop.circle.badge.exclamationmark", isSelected: selectedTab == 5) { selectedTab = 5 }
-                    SidebarButton(title: "Categories",       icon: "folder.fill",                      isSelected: selectedTab == 6)  { selectedTab = 6  }
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 6) {
+                        SidebarButton(title: "Locked Apps", icon: "lock.app.dashed", isSelected: selectedTab == 0) { selectedTab = 0 }
+                        SidebarButton(title: "Add Apps", icon: "plus.app", isSelected: selectedTab == 1) { selectedTab = 1 }
+                        SidebarButton(title: "Stats", icon: "chart.bar", isSelected: selectedTab == 2) { selectedTab = 2 }
+                        SidebarButton(title: "Settings", icon: "gear", isSelected: selectedTab == 3) { selectedTab = 3 }
+                        SidebarButton(title: "Activity Log", icon: "list.bullet.rectangle", isSelected: selectedTab == 4) { selectedTab = 4 }
+                        SidebarButton(title: "Intruder Photos", icon: "person.crop.circle.badge.exclamationmark", isSelected: selectedTab == 5) { selectedTab = 5 }
+                        SidebarButton(title: "Categories", icon: "folder.fill", isSelected: selectedTab == 6) { selectedTab = 6 }
 
-                    Divider().padding(.vertical, 4)
+                        Divider().padding(.vertical, 4)
 
-                    Text("Productivity")
-                        .font(.caption2).foregroundColor(.secondary).padding(.horizontal, 8)
+                        Text("Productivity")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 8)
+                            .padding(.top, 2)
 
-                    SidebarButton(title: "Focus Mode",       icon: "target",                           isSelected: selectedTab == 13) { selectedTab = 13 }
-                    SidebarButton(title: "App Quotas",       icon: "hourglass",                        isSelected: selectedTab == 14) { selectedTab = 14 }
-                    SidebarButton(title: "Schedule Templates", icon: "calendar.badge.clock",             isSelected: selectedTab == 15) { selectedTab = 15 }
+                        SidebarButton(title: "Focus Mode", icon: "target", isSelected: selectedTab == 13) { selectedTab = 13 }
+                        SidebarButton(title: "App Quotas", icon: "hourglass", isSelected: selectedTab == 14) { selectedTab = 14 }
+                        SidebarButton(title: "Schedule Templates", icon: "calendar.badge.clock", isSelected: selectedTab == 15) { selectedTab = 15 }
 
-                    Divider().padding(.vertical, 4)
+                        Divider().padding(.vertical, 4)
 
-                    Text("Security Tools")
-                        .font(.caption2).foregroundColor(.secondary).padding(.horizontal, 8)
+                        Text("Security Tools")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 8)
+                            .padding(.top, 2)
 
-                    SidebarButton(title: "Secure Vault",     icon: "lock.doc.fill",                   isSelected: selectedTab == 7)  { selectedTab = 7  }
-                    SidebarButton(title: "File Locker",      icon: "doc.badge.lock",                  isSelected: selectedTab == 8)  { selectedTab = 8  }
-                    SidebarButton(title: "Clipboard Guard",  icon: "clipboard.fill",                  isSelected: selectedTab == 9)  { selectedTab = 9  }
-                    SidebarButton(title: "Screen Privacy",   icon: "eye.slash.fill",                  isSelected: selectedTab == 10) { selectedTab = 10 }
-                    SidebarButton(title: "Network Monitor",  icon: "network",                         isSelected: selectedTab == 11) { selectedTab = 11 }
-                    SidebarButton(title: "Secure Notes",     icon: "lock.rectangle.stack.fill",       isSelected: selectedTab == 12) { selectedTab = 12 }
-
-                    Spacer()
+                        SidebarButton(title: "Secure Vault", icon: "lock.doc.fill", isSelected: selectedTab == 7) { selectedTab = 7 }
+                        SidebarButton(title: "File Locker", icon: "doc.badge.lock", isSelected: selectedTab == 8) { selectedTab = 8 }
+                        SidebarButton(title: "Clipboard Guard", icon: "clipboard.fill", isSelected: selectedTab == 9) { selectedTab = 9 }
+                        SidebarButton(title: "Screen Privacy", icon: "eye.slash.fill", isSelected: selectedTab == 10) { selectedTab = 10 }
+                        SidebarButton(title: "Network Monitor", icon: "network", isSelected: selectedTab == 11) { selectedTab = 11 }
+                        SidebarButton(title: "Secure Notes", icon: "lock.rectangle.stack.fill", isSelected: selectedTab == 12) { selectedTab = 12 }
+                    }
+                    .padding(12)
                 }
-                .padding()
-                .frame(width: 200)
+                .frame(minWidth: 210, idealWidth: 240, maxWidth: 280)
                 .frame(maxHeight: .infinity)
-                .background(Color(nsColor: .controlBackgroundColor))
+                .background {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(AppDesign.panelGradient)
+                }
+                .overlay {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                }
 
-                // Main Content
-                VStack {
+                Group {
                     switch selectedTab {
                     case 0: LockedAppsView(selectedTab: $selectedTab)
                     case 1: AddAppsView()
@@ -356,10 +412,16 @@ struct MainInterface: View {
                     default: Text("Select an option")
                     }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding(14)
+                .background {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Color(nsColor: .windowBackgroundColor).opacity(0.92))
+                }
             }
         }
+        .padding(12)
+        .appScreenBackground()
         .onReceive(Timer.publish(every: 3, on: .main, in: .common).autoconnect()) { _ in
             hasAccessibility = appMonitor.hasAccessibilityPermissions()
         }
@@ -382,17 +444,24 @@ struct SidebarButton: View {
                 Text(title)
                 Spacer()
             }
-            .padding(8)
-            .background(isSelected ? Color.accentColor.opacity(0.1) : Color.clear)
-            .cornerRadius(6)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(isSelected ? AppDesign.accent.opacity(0.32) : Color.white.opacity(0.02))
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(isSelected ? Color.white.opacity(0.28) : Color.clear, lineWidth: 1)
+            }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .foregroundColor(isSelected ? .accentColor : .primary)
+        .foregroundStyle(isSelected ? Color.white : Color.white.opacity(0.88))
     }
 }
 
-// MARK: - Locked Apps View (Gap 2 fix)
+// MARK: - Locked Apps View
 
 struct LockedAppsView: View {
     @ObservedObject var appMonitor = AppMonitor.shared
@@ -430,7 +499,7 @@ struct LockedAppsView: View {
     }
 }
 
-// MARK: - Locked App Row (Gap 4: per-app passcode, Gap 9: category picker)
+// MARK: - Locked App Row
 
 struct LockedAppRow: View {
     let app: LockedAppInfo
@@ -473,10 +542,10 @@ struct LockedAppRow: View {
 
                 if let schedule = app.schedule, schedule.enabled {
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text("Scheduled")
+                        Text(schedule.behavior.shortTitle)
                             .font(.caption2)
-                            .foregroundColor(.blue)
-                        Text("\(schedule.startTimeFormatted)-\(schedule.endTimeFormatted)")
+                            .foregroundColor(schedule.behavior == .allowDuringWindow ? .orange : .blue)
+                        Text(schedule.scheduleSummary)
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
@@ -644,6 +713,23 @@ struct ScheduleEditorView: View {
                 .font(.subheadline)
 
             if schedule.enabled {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Policy")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    Picker("Policy", selection: $schedule.behavior) {
+                        ForEach(LockSchedule.Behavior.allCases) { behavior in
+                            Text(behavior.title).tag(behavior)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+
+                    Text(schedule.behavior.explanation)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
                 HStack(spacing: 15) {
                     VStack(alignment: .leading) {
                         Text("Start")
@@ -721,7 +807,7 @@ struct ScheduleEditorView: View {
     }
 }
 
-// MARK: - Add Apps View (Gap 2 fix, Gap 12: installed apps)
+// MARK: - Add Apps View
 
 struct AddAppsView: View {
     @State private var runningApps: [NSRunningApplication] = []
@@ -834,7 +920,7 @@ struct AddAppsView: View {
     }
 }
 
-// MARK: - Stats View (Gap 6: time-period filtering)
+// MARK: - Stats View
 
 struct StatsView: View {
     @ObservedObject var appMonitor = AppMonitor.shared
@@ -939,7 +1025,7 @@ struct StatCard: View {
     }
 }
 
-// MARK: - Settings View (Gap 7, Gap 13)
+// MARK: - Settings View
 
 struct SettingsView: View {
     @ObservedObject var appMonitor = AppMonitor.shared
@@ -1061,7 +1147,7 @@ struct SettingsView: View {
     }
 }
 
-// MARK: - Activity Log View (Gap 8)
+// MARK: - Activity Log View
 
 struct ActivityLogView: View {
     @ObservedObject var appMonitor = AppMonitor.shared
@@ -1112,7 +1198,7 @@ struct ActivityLogView: View {
     }
 }
 
-// MARK: - Intruder Photo View (Gap 5)
+// MARK: - Intruder Photo View
 
 struct IntruderPhotoView: View {
     @State private var photos: [URL] = []
@@ -1200,7 +1286,7 @@ struct IntruderPhotoView: View {
     }
 }
 
-// MARK: - Category Management View (Gap 9)
+// MARK: - Category Management View
 
 struct CategoryManagementView: View {
     @ObservedObject var appMonitor = AppMonitor.shared
@@ -1342,7 +1428,7 @@ struct CategoryRow: View {
     }
 }
 
-// MARK: - Unlock Dialog (Gap 4: per-app passcode, Gap 10: failed auth notification)
+// MARK: - Unlock Dialog
 
 struct UnlockDialogView: View {
     @ObservedObject var appMonitor = AppMonitor.shared

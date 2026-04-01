@@ -1,5 +1,7 @@
 import Foundation
 import AVFoundation
+import CryptoKit
+import Security
 
 #if os(macOS)
 import AppKit
@@ -13,6 +15,8 @@ class IntruderManager: NSObject {
     private let captureSession = AVCaptureSession()
     private let photoOutput = AVCapturePhotoOutput()
     private var isSessionConfigured = false
+    private let keychainService = "com.mirxa.AppLocker.intruder"
+    private let keychainAccount = "intruder-photo-key"
 
     override private init() {
         super.init()
@@ -29,10 +33,12 @@ class IntruderManager: NSObject {
                     DispatchQueue.main.async {
                         self.configureSession()
                     }
+                } else {
+                    AppLogger.intruder.error("Camera permission request denied")
                 }
             }
         default:
-            print("Camera access denied")
+            AppLogger.intruder.error("Camera access denied")
         }
     }
 
@@ -45,14 +51,14 @@ class IntruderManager: NSObject {
         #if os(macOS)
         guard let device = AVCaptureDevice.default(for: .video),
               let input = try? AVCaptureDeviceInput(device: device) else {
-            print("No camera available")
+            AppLogger.intruder.error("No camera available")
             captureSession.commitConfiguration()
             return
         }
         #else
         guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front),
               let input = try? AVCaptureDeviceInput(device: device) else {
-            print("No front camera available")
+            AppLogger.intruder.error("No front camera available")
             captureSession.commitConfiguration()
             return
         }
@@ -97,12 +103,11 @@ class IntruderManager: NSObject {
         let url  = docs.appendingPathComponent(filename)
 
         do {
-            let salt = try CryptoHelper.getOrCreateSalt(keychainKey: "intruder-photos")
-            let key  = CryptoHelper.deriveKey(passcode: "intruder", salt: salt, context: "intruder")
+            let key = try loadOrCreateIntruderKey()
             let encrypted = try CryptoHelper.encrypt(data, using: key)
             try encrypted.write(to: url)
         } catch {
-            print("IntruderManager: failed to save encrypted photo: \(error)")
+            AppLogger.intruder.error("Failed to save encrypted intruder photo: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -117,9 +122,66 @@ class IntruderManager: NSObject {
 
     func decryptIntruderPhoto(url: URL) -> Data? {
         guard let encrypted = try? Data(contentsOf: url),
-              let salt = CryptoHelper.loadSaltFromKeychain(key: "intruder-photos") else { return nil }
-        let key = CryptoHelper.deriveKey(passcode: "intruder", salt: salt, context: "intruder")
+              let key = try? loadOrCreateIntruderKey() else { return nil }
         return try? CryptoHelper.decrypt(encrypted, using: key)
+    }
+
+    private func loadOrCreateIntruderKey() throws -> SymmetricKey {
+        if let existing = try loadKeyMaterialFromKeychain() {
+            return SymmetricKey(data: existing)
+        }
+
+        let material = try CryptoHelper.randomSalt()
+        try saveKeyMaterialToKeychain(material)
+        return SymmetricKey(data: material)
+    }
+
+    private func loadKeyMaterialFromKeychain() throws -> Data? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: keychainAccount,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        switch status {
+        case errSecSuccess:
+            return result as? Data
+        case errSecItemNotFound:
+            return nil
+        default:
+            throw NSError(
+                domain: NSOSStatusErrorDomain,
+                code: Int(status),
+                userInfo: [NSLocalizedDescriptionKey: "Keychain lookup failed (\(status))"]
+            )
+        }
+    }
+
+    private func saveKeyMaterialToKeychain(_ material: Data) throws {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: keychainAccount
+        ]
+
+        SecItemDelete(query as CFDictionary)
+
+        var item = query
+        item[kSecValueData as String] = material
+        item[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+
+        let status = SecItemAdd(item as CFDictionary, nil)
+        guard status == errSecSuccess else {
+            throw NSError(
+                domain: NSOSStatusErrorDomain,
+                code: Int(status),
+                userInfo: [NSLocalizedDescriptionKey: "Keychain save failed (\(status))"]
+            )
+        }
     }
 }
 

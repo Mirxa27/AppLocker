@@ -12,7 +12,7 @@ A macOS application that lets you lock apps behind a passcode or Touch ID/Face I
 - **Intruder Detection** - Captures photos after 2+ failed unlock attempts
 
 ### Scheduling & Productivity
-- **Schedule-Based Locking** - Set time-based rules for when apps should be locked (per-app, with day-of-week support)
+- **Schedule-Based Locking** - Set per-app time windows that either block access or allow access only during selected hours
 - **Smart Schedule Templates** - 8 pre-built templates for common patterns (Work Hours, Evening Wind Down, Study Time, etc.)
 - **Focus Mode** - Pomodoro-style distraction-free sessions with profiles (Deep Work, Study, Meeting)
 - **App Usage Quotas** - Daily time limits for locked apps with warnings and optional auto-termination
@@ -109,7 +109,8 @@ The "Stats" tab shows:
 - Uses CryptoKit (SHA-256) for passcode hashing
 - Requires macOS 13.0 (Ventura) or later
 - Needs Accessibility permissions for app monitoring
-- Pure Swift Package Manager project (no Xcode project needed)
+- Xcode project is generated from `project.yml` with XcodeGen
+- SwiftPM test target covers schedule and crypto logic
 
 ## Download
 
@@ -125,24 +126,30 @@ Get the latest release from [GitHub Releases](https://github.com/Mirxa27/AppLock
 
 ```bash
 cd ~/AppLocker
-make build      # Debug build
-make release    # Release build with DMG
-make install    # Install to /Applications
+make generate-project
+make build-macos
+make test
+make release
+# or export App Store-ready artifacts for both platforms
+make publish-appstore
 ```
 
 ### Manual Build
 
 ```bash
 cd ~/AppLocker
-swift build -c release
+xcodegen generate --spec project.yml
+xcodebuild -project AppLocker.xcodeproj -scheme AppLocker -configuration Debug -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO build
+swift test --package-path .
 ```
 
-To create the app bundle:
+Build the iOS companion with:
 
 ```bash
-swift build -c release
-cp -r AppLocker.app/Contents/Resources .build/arm64-apple-macosx/release/
+xcodebuild -project AppLocker.xcodeproj -target AppLockerCompanion -configuration Debug -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build
 ```
+
+If the local Xcode install does not have a compatible simulator runtime for the active iPhone simulator SDK, install the matching iOS platform/runtime from Xcode Components before running the iOS build.
 
 ### Creating a Release
 
@@ -151,10 +158,12 @@ See [RELEASE.md](RELEASE.md) for detailed release instructions.
 Quick release:
 
 ```bash
-make tag-release VERSION=3.1
-git add -A && git commit -m "Release v3.1"
-git tag -a v3.1 -m "Release v3.1"
-git push origin main && git push origin v3.1
+make test
+./scripts/build-release.sh
+# or, for a Developer ID signed build:
+./scripts/release-signed.sh
+# or, for App Store export artifacts:
+./scripts/publish-appstore.sh
 ```
 
 ## Important

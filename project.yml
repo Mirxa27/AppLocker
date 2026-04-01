@@ -18,7 +18,26 @@ settings:
     SWIFT_VERSION: "5.9"
     MARKETING_VERSION: "3.6"
     CURRENT_PROJECT_VERSION: "1"
-    DEVELOPMENT_TEAM: ""   # Fill in your Team ID
+    DEVELOPMENT_TEAM: "48P296BWWP"
+
+schemes:
+  AppLocker:
+    build:
+      targets:
+        AppLocker: all
+    run:
+      config: Debug
+    archive:
+      config: Release
+
+  AppLockerCompanion:
+    build:
+      targets:
+        AppLockerCompanion: all
+    run:
+      config: Debug
+    archive:
+      config: Release
 
 targets:
 
@@ -41,6 +60,14 @@ targets:
 
     info:
       path: SupportingFiles/macOS/Info.plist
+      properties:
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        LSApplicationCategoryType: public.app-category.utilities
+        NSCameraUsageDescription: Use the camera to capture encrypted intruder photos after failed unlock attempts.
+
+    dependencies:
+      - sdk: AppIntents.framework
 
     entitlements:
       path: SupportingFiles/macOS/AppLocker.entitlements
@@ -50,8 +77,10 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.mirxa.AppLocker
         INFOPLIST_FILE: SupportingFiles/macOS/Info.plist
         CODE_SIGN_ENTITLEMENTS: SupportingFiles/macOS/AppLocker.entitlements
+        ENABLE_APP_SANDBOX: YES
         ENABLE_HARDENED_RUNTIME: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SUPPORTED_PLATFORMS: macosx
       configs:
         Release:
           SWIFT_OPTIMIZATION_LEVEL: "-O"
@@ -84,6 +113,27 @@ targets:
 
     info:
       path: SupportingFiles/iOS/Info.plist
+      properties:
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        NSCameraUsageDescription: Use the camera to capture encrypted intruder photos after failed unlock attempts.
+        NSFaceIDUsageDescription: Use Face ID to unlock AppLocker and approve protected actions.
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+
+    dependencies:
+      - sdk: AppIntents.framework
+      - sdk: FamilyControls.framework
+      - sdk: ManagedSettings.framework
+      - sdk: DeviceActivity.framework
 
     entitlements:
       path: SupportingFiles/iOS/AppLockerCompanion.entitlements
@@ -95,6 +145,7 @@ targets:
         CODE_SIGN_ENTITLEMENTS: SupportingFiles/iOS/AppLockerCompanion.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         TARGETED_DEVICE_FAMILY: "1,2"   # iPhone + iPad
+        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
       configs:
         Release:
           SWIFT_OPTIMIZATION_LEVEL: "-O"

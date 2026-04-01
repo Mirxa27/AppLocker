@@ -23,6 +23,11 @@ let package = Package(
             swiftSettings: [
                 .define("SWIFT_PACKAGE")
             ]
+        ),
+        .testTarget(
+            name: "AppLockerTests",
+            dependencies: ["AppLocker"],
+            path: "Tests/AppLockerTests"
         )
     ]
 )

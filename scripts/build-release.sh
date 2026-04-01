@@ -1,185 +1,106 @@
 #!/bin/bash
-# Build and package AppLocker for release
 
-set -e
+set -euo pipefail
 
-# Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Configuration
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROJECT_SPEC="$REPO/project.yml"
+PROJECT_FILE="$REPO/AppLocker.xcodeproj"
+SCHEME="AppLocker"
 APP_NAME="AppLocker"
-BUNDLE_ID="com.applocker.AppLocker"
+RELEASE_DIR="$REPO/release"
+ARCHIVE_PATH="$RELEASE_DIR/$APP_NAME.xcarchive"
+ENTITLEMENTS="$REPO/SupportingFiles/macOS/AppLocker.entitlements"
 
-# Directories
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-BUILD_DIR="$PROJECT_DIR/.build"
-RELEASE_DIR="$PROJECT_DIR/release"
-APP_BUNDLE="$PROJECT_DIR/AppLocker.app"
-
-# Determine version:
-# 1) Use VERSION env var if set
-# 2) Else read from existing Info.plist
-# 3) Else derive from latest git tag (optionally prefixed with 'v')
-# 4) Fail if still unknown
-if [ -z "$VERSION" ]; then
-    if [ -f "$APP_BUNDLE/Contents/Info.plist" ]; then
-        VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$APP_BUNDLE/Contents/Info.plist" 2>/dev/null || true)
+require_tool() {
+    if ! command -v "$1" >/dev/null 2>&1; then
+        echo -e "${RED}Missing required tool: $1${NC}"
+        exit 1
     fi
-fi
+}
 
-if [ -z "$VERSION" ]; then
-    GIT_TAG=$(git -C "$PROJECT_DIR" describe --tags --abbrev=0 2>/dev/null || true)
-    if [ -n "$GIT_TAG" ]; then
-        # Strip leading 'v' if present (e.g. v1.2.3 -> 1.2.3)
-        VERSION="${GIT_TAG#v}"
-    fi
-fi
+read_build_setting() {
+    local key="$1"
+    printf '%s\n' "$BUILD_SETTINGS" | awk -F ' = ' -v key="$key" '$1 ~ (" " key "$") { print $2; exit }'
+}
 
-if [ -z "$VERSION" ]; then
-    echo -e "${RED}❌ Unable to determine app version.${NC}"
-    echo -e "${RED}   Set the VERSION environment variable,${NC}"
-    echo -e "${RED}   or ensure Info.plist exists,${NC}"
-    echo -e "${RED}   or create an annotated git tag (e.g. v1.2.3).${NC}"
-    exit 1
-fi
+require_tool xcodebuild
+require_tool xcodegen
+require_tool codesign
+require_tool hdiutil
 
-echo -e "${GREEN}🚀 Building $APP_NAME v$VERSION${NC}"
-echo ""
+echo -e "${YELLOW}Generating Xcode project from project.yml...${NC}"
+xcodegen generate --spec "$PROJECT_SPEC" >/dev/null
 
-# Clean previous builds
-echo -e "${YELLOW}📁 Cleaning previous builds...${NC}"
-rm -rf "$RELEASE_DIR"
-mkdir -p "$RELEASE_DIR"
+BUILD_SETTINGS="$(xcodebuild \
+    -project "$PROJECT_FILE" \
+    -scheme "$SCHEME" \
+    -configuration Release \
+    -destination 'platform=macOS,arch=arm64' \
+    -showBuildSettings)"
 
-# Build for release
-echo -e "${YELLOW}🔨 Building release binary...${NC}"
-cd "$PROJECT_DIR"
-swift build -c release
-
-if [ ! -f "$BUILD_DIR/release/AppLocker" ]; then
-    echo -e "${RED}❌ Build failed - binary not found${NC}"
-    exit 1
-fi
-
-echo -e "${GREEN}✅ Build successful${NC}"
-echo ""
-
-# Create app bundle structure if it doesn't exist
-echo -e "${YELLOW}📦 Packaging app bundle...${NC}"
-mkdir -p "$APP_BUNDLE/Contents/MacOS"
-mkdir -p "$APP_BUNDLE/Contents/Resources"
-
-# Create Info.plist if it doesn't exist
-if [ ! -f "$APP_BUNDLE/Contents/Info.plist" ]; then
-    echo -e "${YELLOW}📝 Creating Info.plist...${NC}"
-    cat > "$APP_BUNDLE/Contents/Info.plist" << PLIST
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleName</key>
-    <string>AppLocker</string>
-    <key>CFBundleDisplayName</key>
-    <string>AppLocker</string>
-    <key>CFBundleIdentifier</key>
-    <string>${BUNDLE_ID}</string>
-    <key>CFBundleVersion</key>
-    <string>${VERSION}</string>
-    <key>CFBundleShortVersionString</key>
-    <string>${VERSION}</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>CFBundleExecutable</key>
-    <string>AppLocker</string>
-    <key>CFBundleIconFile</key>
-    <string>AppIcon</string>
-    <key>LSMinimumSystemVersion</key>
-    <string>13.0</string>
-    <key>LSUIElement</key>
-    <true/>
-    <key>NSHighResolutionCapable</key>
-    <true/>
-    <key>NSSupportsAutomaticGraphicsSwitching</key>
-    <true/>
-    <key>NSCameraUsageDescription</key>
-    <string>AppLocker uses the camera to capture photos of unauthorized access attempts.</string>
-    <key>NSAppleEventsUsageDescription</key>
-    <string>AppLocker uses Apple Events to automate system actions like locking the screen.</string>
-</dict>
-</plist>
-PLIST
-fi
-
-# Copy binary into app bundle
-cp "$BUILD_DIR/release/AppLocker" "$APP_BUNDLE/Contents/MacOS/AppLocker"
-
-# Copy icon if available
-if [ -f "$PROJECT_DIR/icon.png" ]; then
-    cp "$PROJECT_DIR/icon.png" "$APP_BUNDLE/Contents/Resources/AppIcon.png"
-fi
-
-# Sign the app
-echo -e "${YELLOW}🔏 Signing app bundle...${NC}"
-if [ -f "$PROJECT_DIR/dist/entitlements.plist" ]; then
-    codesign --force --deep --sign - \
-        --entitlements "$PROJECT_DIR/dist/entitlements.plist" \
-        --options runtime \
-        "$APP_BUNDLE" 2>&1 | grep -v "replacing existing signature" || true
-else
-    codesign --force --deep --sign - \
-        --options runtime \
-        "$APP_BUNDLE" 2>&1 | grep -v "replacing existing signature" || true
-fi
-
-# Verify signature
-echo -e "${YELLOW}✓ Verifying signature...${NC}"
-if codesign --verify --deep --strict "$APP_BUNDLE" 2>&1; then
-    echo -e "${GREEN}✅ Signature valid${NC}"
-else
-    echo -e "${YELLOW}⚠️  Signature verification had issues (may need Developer ID for distribution)${NC}"
-fi
-
-# Copy to release directory
-echo -e "${YELLOW}📋 Copying to release directory...${NC}"
-cp -R "$APP_BUNDLE" "$RELEASE_DIR/"
-
-# Create DMG
-echo -e "${YELLOW}💿 Creating DMG installer...${NC}"
+VERSION="${VERSION:-$(read_build_setting MARKETING_VERSION)}"
+BUILD_NUMBER="${BUILD_NUMBER:-$(read_build_setting CURRENT_PROJECT_VERSION)}"
+BUNDLE_ID="$(read_build_setting PRODUCT_BUNDLE_IDENTIFIER)"
 DMG_NAME="${APP_NAME}-${VERSION}.dmg"
 DMG_PATH="$RELEASE_DIR/$DMG_NAME"
 
-# Create temporary directory for DMG contents
-TMP_DIR=$(mktemp -d)
-cp -R "$APP_BUNDLE" "$TMP_DIR/"
-ln -s /Applications "$TMP_DIR/Applications"
-
-# Create DMG
-hdiutil create -volname "$APP_NAME" \
-    -srcfolder "$TMP_DIR" \
-    -ov -format UDZO \
-    "$DMG_PATH" > /dev/null 2>&1
-
-# Clean up temp directory
-rm -rf "$TMP_DIR"
-
-if [ -f "$DMG_PATH" ]; then
-    echo -e "${GREEN}✅ DMG created: $DMG_NAME${NC}"
-else
-    echo -e "${RED}❌ DMG creation failed${NC}"
+if [ -z "$VERSION" ] || [ -z "$BUILD_NUMBER" ] || [ -z "$BUNDLE_ID" ]; then
+    echo -e "${RED}Unable to resolve build settings for ${SCHEME}.${NC}"
     exit 1
 fi
 
-echo ""
-echo -e "${GREEN}🎉 Release build complete!${NC}"
-echo ""
-echo "📦 Release artifacts:"
-echo "   App Bundle: $RELEASE_DIR/AppLocker.app ($(du -sh "$RELEASE_DIR/AppLocker.app" | cut -f1))"
-echo "   DMG:        $RELEASE_DIR/$DMG_NAME ($(du -sh "$DMG_PATH" | cut -f1))"
-echo ""
-echo "💡 To distribute:"
-echo "   - Upload the DMG to GitHub Releases"
-echo "   - Or run: gh release create v$VERSION $DMG_PATH --title 'AppLocker v$VERSION' --notes 'Release notes here'"
+echo -e "${GREEN}Preparing ${APP_NAME} ${VERSION} (${BUILD_NUMBER})${NC}"
+echo "Bundle ID: $BUNDLE_ID"
+
+rm -rf "$RELEASE_DIR"
+mkdir -p "$RELEASE_DIR"
+
+echo -e "${YELLOW}Archiving release build...${NC}"
+xcodebuild \
+    -project "$PROJECT_FILE" \
+    -scheme "$SCHEME" \
+    -configuration Release \
+    -destination 'platform=macOS,arch=arm64' \
+    -archivePath "$ARCHIVE_PATH" \
+    SKIP_INSTALL=NO \
+    CODE_SIGNING_ALLOWED=NO \
+    archive
+
+APP_PATH="$ARCHIVE_PATH/Products/Applications/$APP_NAME.app"
+
+if [ ! -d "$APP_PATH" ]; then
+    echo -e "${RED}Archive succeeded but ${APP_PATH} is missing.${NC}"
+    exit 1
+fi
+
+echo -e "${YELLOW}Applying ad-hoc signature for local distribution...${NC}"
+if [ -f "$ENTITLEMENTS" ]; then
+    codesign --force --deep --sign - --entitlements "$ENTITLEMENTS" "$APP_PATH"
+else
+    codesign --force --deep --sign - "$APP_PATH"
+fi
+
+codesign --verify --deep --strict "$APP_PATH"
+
+cp -R "$APP_PATH" "$RELEASE_DIR/"
+
+echo -e "${YELLOW}Building DMG...${NC}"
+TMP_DIR="$(mktemp -d)"
+cp -R "$APP_PATH" "$TMP_DIR/"
+ln -s /Applications "$TMP_DIR/Applications"
+hdiutil create \
+    -volname "$APP_NAME" \
+    -srcfolder "$TMP_DIR" \
+    -ov \
+    -format UDZO \
+    "$DMG_PATH" >/dev/null
+rm -rf "$TMP_DIR"
+
+echo -e "${GREEN}Release artifacts ready.${NC}"
+echo "App: $RELEASE_DIR/$APP_NAME.app"
+echo "DMG: $DMG_PATH"

@@ -118,6 +118,15 @@ struct TemplateCard: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
+
+                HStack {
+                    Image(systemName: template.isAllowList ? "checkmark.shield" : "lock.shield")
+                        .font(.caption)
+                        .foregroundColor(template.isAllowList ? .orange : .blue)
+                    Text(template.effectiveBehavior.title)
+                        .font(.caption)
+                        .foregroundColor(template.isAllowList ? .orange : .blue)
+                }
                 
                 if !affectedApps.isEmpty {
                     HStack {
@@ -169,9 +178,13 @@ struct TemplatePreviewSheet: View {
                 DetailRow(icon: "calendar", label: "Days", value: template.formattedDays)
                 
                 if template.isAllowList {
-                    Label("Allow-list mode: Only these apps are allowed during this time", systemImage: "hand.tap.fill")
+                    Label(template.effectiveBehavior.explanation, systemImage: "hand.tap.fill")
                         .font(.caption)
                         .foregroundColor(.orange)
+                } else {
+                    Label(template.effectiveBehavior.explanation, systemImage: "lock.shield.fill")
+                        .font(.caption)
+                        .foregroundColor(.blue)
                 }
             }
             

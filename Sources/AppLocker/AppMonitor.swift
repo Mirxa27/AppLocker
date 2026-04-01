@@ -189,7 +189,7 @@ class AppMonitor: ObservableObject {
 
         // Check schedule
         if let schedule = lockedApp.schedule, schedule.enabled {
-            if !schedule.isActiveNow() { return }
+            if !schedule.shouldBlock(at: Date(), calendar: .current) { return }
         }
 
         // --- BLOCK THE APP ---
@@ -548,7 +548,7 @@ class AppMonitor: ObservableObject {
 
     func exportConfiguration() -> Data? {
         let export = AppLockerExport(
-            version: "3.0", exportDate: Date(), lockedApps: lockedApps, categories: categories,
+            version: Self.currentAppVersion, exportDate: Date(), lockedApps: lockedApps, categories: categories,
             settings: ExportedSettings(unlockDuration: unlockDuration, autoLockOnSleep: autoLockOnSleep, blockingOverlayDuration: blockingOverlayDuration)
         )
         let encoder = JSONEncoder()
@@ -649,6 +649,13 @@ class AppMonitor: ObservableObject {
         return try CryptoHelper.decrypt(Data(ciphertext), using: key)
     }
 
+    private static var currentAppVersion: String {
+        let info = Bundle.main.infoDictionary
+        return (info?["CFBundleShortVersionString"] as? String)
+            ?? (info?["CFBundleVersion"] as? String)
+            ?? "1.0"
+    }
+
     func importConfiguration(data: Data) {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
@@ -722,7 +729,7 @@ class AppMonitor: ObservableObject {
         }
         self.saveBlockLog()
 
-        print("AppLocker: \(entry)")
+        AppLogger.app.info("\(entry, privacy: .public)")
     }
 
     func clearLog() {

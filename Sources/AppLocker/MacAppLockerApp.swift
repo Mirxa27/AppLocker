@@ -42,6 +42,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        let isScreenshotCaptureMode = ProcessInfo.processInfo.environment["APPLOCKER_CAPTURE_SCREENSHOT"] == "1"
+
         #if !DEBUG
         applyAntiDebugger()
         #endif
@@ -59,9 +61,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
         // Set up menu bar icon
         setupMenuBar()
         InactivityMonitor.shared.start()
-        Task { @MainActor in
-            await CloudKitManager.shared.checkiCloudStatus()
-            CloudKitManager.shared.pruneOldRecords()
+        if !isScreenshotCaptureMode {
+            Task { @MainActor in
+                await CloudKitManager.shared.checkiCloudStatus()
+                CloudKitManager.shared.pruneOldRecords()
+            }
         }
 
         ScreenPrivacyManager.shared.applyWindowProtection()
@@ -90,7 +94,56 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
             NSApp.activate(ignoringOtherApps: true)
             if let window = NSApp.windows.first(where: { !($0 is NSPanel) }) {
                 window.makeKeyAndOrderFront(nil)
+                self.maybeCaptureWindowForAppStore(window: window)
+            } else {
+                self.maybeCaptureWindowForAppStore(window: nil)
             }
+        }
+    }
+
+    private func maybeCaptureWindowForAppStore(window: NSWindow?) {
+        let env = ProcessInfo.processInfo.environment
+        guard env["APPLOCKER_CAPTURE_SCREENSHOT"] == "1" else { return }
+
+        let outputPath = env["APPLOCKER_SCREENSHOT_PATH"] ?? (NSTemporaryDirectory() + "AppLocker-mac-asc.png")
+        let delay = Double(env["APPLOCKER_SCREENSHOT_DELAY"] ?? "") ?? 1.0
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            guard let targetWindow = window ?? NSApp.windows.first(where: { !($0 is NSPanel) }),
+                  let contentView = targetWindow.contentView else {
+                NSApp.terminate(nil)
+                return
+            }
+
+            // Force an App Store accepted screenshot size for direct upload.
+            targetWindow.setContentSize(NSSize(width: 1440, height: 900))
+            targetWindow.layoutIfNeeded()
+            contentView.layoutSubtreeIfNeeded()
+
+            let captureRect = NSRect(origin: .zero, size: NSSize(width: 1440, height: 900))
+            guard let bitmap = NSBitmapImageRep(
+                bitmapDataPlanes: nil,
+                pixelsWide: Int(captureRect.width),
+                pixelsHigh: Int(captureRect.height),
+                bitsPerSample: 8,
+                samplesPerPixel: 4,
+                hasAlpha: true,
+                isPlanar: false,
+                colorSpaceName: .deviceRGB,
+                bytesPerRow: 0,
+                bitsPerPixel: 0
+            ) else {
+                NSApp.terminate(nil)
+                return
+            }
+
+            contentView.cacheDisplay(in: captureRect, to: bitmap)
+
+            if let pngData = bitmap.representation(using: .png, properties: [:]) {
+                try? pngData.write(to: URL(fileURLWithPath: outputPath), options: .atomic)
+            }
+
+            NSApp.terminate(nil)
         }
     }
 

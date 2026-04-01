@@ -58,8 +58,50 @@ class AppProtectionManager: ObservableObject {
     func isPINSet() -> Bool { loadPINHash() != nil }
 
     func setPIN(_ pin: String) -> Bool {
-        guard pin.count >= 4 else { authError = "PIN must be at least 4 digits"; return false }
-        return savePIN(pin)
+        guard !isPINSet() else {
+            authError = "PIN already exists. Use Change PIN to update it."
+            return false
+        }
+        if let validationError = validatePIN(pin) {
+            authError = validationError
+            return false
+        }
+        let saved = persistPIN(pin)
+        if !saved, authError == nil {
+            authError = "Failed to save PIN"
+        }
+        return saved
+    }
+
+    func changePIN(currentPIN: String, newPIN: String) -> (success: Bool, error: String?) {
+        guard isPINSet() else {
+            let success = setPIN(newPIN)
+            return (success, success ? nil : authError)
+        }
+
+        guard matchesPIN(currentPIN) else {
+            return (false, "Current PIN is incorrect")
+        }
+
+        if let validationError = validatePIN(newPIN) {
+            return (false, validationError)
+        }
+
+        guard currentPIN != newPIN else {
+            return (false, "New PIN must be different from the current PIN")
+        }
+
+        guard iOSFileLockerManager.shared.rewrapVaultKey(currentPIN: currentPIN, newPIN: newPIN) else {
+            return (false, iOSFileLockerManager.shared.lastError ?? "Failed to update File Locker credentials")
+        }
+
+        guard persistPIN(newPIN) else {
+            _ = iOSFileLockerManager.shared.rewrapVaultKey(currentPIN: newPIN, newPIN: currentPIN)
+            return (false, authError ?? "Failed to save new PIN")
+        }
+
+        authError = nil
+        return (true, nil)
     }
 
     func verifyPIN(_ pin: String) -> Bool {
@@ -68,11 +110,12 @@ class AppProtectionManager: ObservableObject {
             authError = "Too many attempts. Try again in \(remaining)s"
             return false
         }
-        guard let stored = loadPINHash(), let salt = loadPINSalt() else {
+
+        guard isPINSet() else {
             authError = "No PIN set"; return false
         }
-        guard let inputHash = PBKDF2Helper.deriveKey(passcode: pin, salt: salt) else { return false }
-        if stored == inputHash {
+
+        if matchesPIN(pin) {
             failedAttempts = 0; isAppLocked = false; authError = nil; return true
         }
         failedAttempts += 1
@@ -153,11 +196,28 @@ class AppProtectionManager: ObservableObject {
 
     // MARK: - Keychain PIN helpers
 
-    private func savePIN(_ pin: String) -> Bool {
+    func matchesPIN(_ pin: String) -> Bool {
+        guard let stored = loadPINHash(),
+              let salt = loadPINSalt(),
+              let inputHash = PBKDF2Helper.deriveKey(passcode: pin, salt: salt) else { return false }
+        return stored == inputHash
+    }
+
+    private func validatePIN(_ pin: String) -> String? {
+        guard pin.allSatisfy(\.isNumber) else { return "PIN must contain digits only" }
+        guard (4...6).contains(pin.count) else { return "PIN must be 4 to 6 digits" }
+        return nil
+    }
+
+    private func persistPIN(_ pin: String) -> Bool {
         guard let salt = try? CryptoHelper.randomSalt(),
               let hash = PBKDF2Helper.deriveKey(passcode: pin, salt: salt) else { return false }
-        return saveToKeychain(key: pinKey, data: hash)
+        let saved = saveToKeychain(key: pinKey, data: hash)
             && saveToKeychain(key: pinSaltKey, data: salt)
+        if !saved, authError == nil {
+            authError = "Failed to store PIN securely"
+        }
+        return saved
     }
 
     private func loadPINHash() -> Data? { loadFromKeychain(key: pinKey) }

@@ -7,7 +7,7 @@
 ## 1. Goals
 
 1. Harden macOS cryptographic and runtime security to professional standard.
-2. Build a full iOS companion dashboard (replacing the 3-button stub).
+2. Build a full iOS companion dashboard (replacing the legacy 3-button shell).
 3. Replace the slow iCloud KV notification path with real-time CloudKit push.
 
 ---

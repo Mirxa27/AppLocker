@@ -143,6 +143,8 @@ class ScheduleTemplateManager {
         let monitor = AppMonitor.shared
         let targetApps = apps ?? monitor.lockedApps
         var appliedCount = 0
+        var resolvedSchedule = template.schedule
+        resolvedSchedule.behavior = template.effectiveBehavior
         
         for app in targetApps {
             // Check if app matches any category in template
@@ -151,14 +153,7 @@ class ScheduleTemplateManager {
             }
             
             if shouldApply || template.appliesToAll {
-                if template.isAllowList {
-                    // For allow list templates, only allow during specified time
-                    // This means locking outside the window
-                    // For simplicity, we'll apply the schedule as-is for now
-                    monitor.updateAppSchedule(bundleID: app.bundleID, schedule: template.schedule)
-                } else {
-                    monitor.updateAppSchedule(bundleID: app.bundleID, schedule: template.schedule)
-                }
+                monitor.updateAppSchedule(bundleID: app.bundleID, schedule: resolvedSchedule)
                 appliedCount += 1
             }
         }
@@ -186,6 +181,10 @@ struct ScheduleTemplate: Identifiable {
     let categories: [String]
     var isAllowList: Bool = false
     var appliesToAll: Bool = false
+
+    var effectiveBehavior: LockSchedule.Behavior {
+        isAllowList ? .allowDuringWindow : .blockDuringWindow
+    }
     
     var formattedTime: String {
         "\(schedule.startTimeFormatted) - \(schedule.endTimeFormatted)"

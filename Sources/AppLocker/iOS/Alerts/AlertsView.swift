@@ -23,63 +23,112 @@ struct AlertsView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                Picker("Filter", selection: $filter) {
-                    ForEach(AlertFilter.allCases) { f in Text(f.rawValue).tag(f) }
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal)
-                .padding(.vertical, 8)
+            ScrollView {
+                VStack(spacing: 14) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text("Filter")
+                                .font(.headline)
+                            Spacer()
+                            AppStatusBadge(
+                                text: "\(filtered.count)",
+                                color: filter == .failed ? AppDesign.danger : AppDesign.accent
+                            )
+                        }
 
-                if filtered.isEmpty {
-                    VStack(spacing: 16) {
-                        Spacer()
-                        Image(systemName: "bell.slash")
-                            .font(.system(size: 48)).foregroundColor(.secondary)
-                        Text("No Alerts").font(.title2).foregroundColor(.secondary)
-                        Text("Alerts appear here when your Mac blocks an app.")
-                            .font(.caption).foregroundColor(.secondary).multilineTextAlignment(.center)
-                        Spacer()
+                        Picker("Filter", selection: $filter) {
+                            ForEach(AlertFilter.allCases) { option in
+                                Text(option.rawValue).tag(option)
+                            }
+                        }
+                        .pickerStyle(.segmented)
                     }
-                } else {
-                    List(filtered) { alert in
-                        AlertRecordRow(alert: alert)
+                    .appSurface()
+
+                    if filtered.isEmpty {
+                        VStack(spacing: 12) {
+                            Image(systemName: "bell.slash")
+                                .font(.system(size: 40, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                            Text("No Alerts")
+                                .font(.title3.weight(.semibold))
+                            Text("Alerts appear here when your Mac blocks apps or detects failed unlock attempts.")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .appSurface()
+                    } else {
+                        LazyVStack(spacing: 10) {
+                            ForEach(filtered) { alert in
+                                AlertRecordRow(alert: alert)
+                            }
+                        }
                     }
                 }
+                .padding(16)
             }
+            .appScreenBackground()
             .navigationTitle("Alerts")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { kv.decodeAllKeys() } label: { Image(systemName: "arrow.clockwise") }
+                    Button {
+                        kv.decodeAllKeys()
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                    }
                 }
                 if !kv.alertHistory.isEmpty {
                     ToolbarItem(placement: .topBarLeading) {
-                        Button("Clear") { kv.clearHistory() }
+                        Button("Clear") {
+                            kv.clearHistory()
+                        }
                     }
                 }
             }
-            .refreshable { kv.decodeAllKeys() }
+            .refreshable {
+                kv.decodeAllKeys()
+            }
         }
     }
 }
 
 struct AlertRecordRow: View {
     let alert: AlertRecord
-    var isFailed: Bool { alert.type.contains("fail") }
+
+    private var isFailed: Bool {
+        alert.type.contains("fail")
+    }
 
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: isFailed ? "exclamationmark.triangle.fill" : "hand.raised.fill")
-                .foregroundColor(isFailed ? .red : .orange).font(.title3)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(alert.appName).font(.headline)
-                Text(alert.deviceName).font(.caption).foregroundColor(.secondary)
+                .foregroundStyle(isFailed ? AppDesign.danger : AppDesign.warning)
+                .font(.title3)
+                .frame(width: 26)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(alert.appName)
+                    .font(.headline)
+                Text(alert.deviceName)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
-            Spacer()
-            Text(alert.timestamp.formatted(date: .omitted, time: .shortened))
-                .font(.caption2).foregroundColor(.secondary)
+
+            Spacer(minLength: 8)
+
+            VStack(alignment: .trailing, spacing: 3) {
+                AppStatusBadge(
+                    text: isFailed ? "Failed" : "Blocked",
+                    color: isFailed ? AppDesign.danger : AppDesign.warning
+                )
+                Text(alert.timestamp.formatted(date: .omitted, time: .shortened))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
         }
-        .padding(.vertical, 4)
+        .appSurface(padding: 14, cornerRadius: 14)
     }
 }
 #endif

@@ -14,15 +14,20 @@
 		0B7CB975DCBA36CE5A19A79B /* AppQuotaManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B733CA47117AB034CEC0D370 /* AppQuotaManager.swift */; };
 		12A810A5048085C098BBC0F6 /* InactivityMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8ECBD2FB336E1BB777C270C5 /* InactivityMonitor.swift */; };
 		12E55AFB0BC02EBF8D685C36 /* IntruderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0ECCB73AB5F53C4DE4B62CF /* IntruderManager.swift */; };
+		176708E4FDCEC4FE29E2B7FE /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CA478951B8FA86A212CC1BED /* AppIntents.framework */; };
 		1878DB288A76C6246119AB73 /* CryptoHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3345518D7FAB7A1B778E13E0 /* CryptoHelper.swift */; };
 		187B09A27A396276F1E9C092 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A43A52D75427A122F909DC93 /* Assets.xcassets */; };
 		1CB2718E8F058709233E2596 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB7FA2E3AAB49C2B9AED67AD /* DashboardView.swift */; };
 		1F7FFF241E92F50402B69DED /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A932A9C64198B92A0E70FE6 /* NotificationManager.swift */; };
+		22450B2FD09B1F8FDC358572 /* DeviceActivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C89B646CF3BED6682852A1B /* DeviceActivity.framework */; };
 		2BE55D2B9140CAB6EBBE595F /* iOSSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F45A40BE06D632D040111744 /* iOSSettingsView.swift */; };
 		2C6ED58D4415801F1BBD7CB8 /* MacContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3552440740293B5C0BE39957 /* MacContentView.swift */; };
+		32A566FDF05B67EB1EDB728A /* iOSFocusModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA5B8C48B1C1B128EBE489F6 /* iOSFocusModeView.swift */; };
 		36D6CF705E75C28F81CFA42B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A43A52D75427A122F909DC93 /* Assets.xcassets */; };
 		3ABFB4C80ADCC6FB963E8BA8 /* IntruderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0ECCB73AB5F53C4DE4B62CF /* IntruderManager.swift */; };
+		3EC60BE53E09E672D0547301 /* iOSScreenPrivacyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CB4F00614D93601C002B2AC /* iOSScreenPrivacyManager.swift */; };
 		3FEC782EE1CCE50591C6EF58 /* NetworkMonitorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17A731B3BD187F11BACABBDB /* NetworkMonitorView.swift */; };
+		4423DE2C388A7F40AD5CDA6F /* iOSFocusModeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 915D5C62798E4501672BDD2F /* iOSFocusModeManager.swift */; };
 		473C404CC37ADDCE8AA56ACA /* FocusModeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADA759CE912AA43A727E1320 /* FocusModeManager.swift */; };
 		4CB9949DF987A305F7544498 /* FileLockerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01D92375103E41F760E0B3B5 /* FileLockerView.swift */; };
 		4E13096445370FFF8ACCC0EB /* AppLockerApp_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9637AFA612BEAFE89DF5C4B /* AppLockerApp_iOS.swift */; };
@@ -31,6 +36,7 @@
 		5146FBDE007954935A78A13A /* AppProtectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 177EF647462EB2FD9277E581 /* AppProtectionManager.swift */; };
 		5788CAB1C912EA30E50902FC /* SecureNotesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8931D2B844481366D713C2E6 /* SecureNotesManager.swift */; };
 		59EA0CA9FAE47A37AC57DA20 /* MacAppLockerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EC7D7A5BA720F58D22A91AA /* MacAppLockerApp.swift */; };
+		6556809949ABE548AE81130A /* iOSScreenPrivacyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D7CC1F166678E35DA6F3455 /* iOSScreenPrivacyView.swift */; };
 		6D2954A7294652FFD921A825 /* KVStoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F909861232ADCC5C92170855 /* KVStoreManager.swift */; };
 		75E6436284E9AAEE50F34794 /* BlockingOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3426A7D3410EE564D1F72BF /* BlockingOverlayView.swift */; };
 		771D9747033FDB57A8E8E3AA /* FocusModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AF35C0E801A018A83F9EF98 /* FocusModeView.swift */; };
@@ -40,23 +46,38 @@
 		84ABBCC2EFF83E5301080711 /* AppMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4790B3D849A74237E9C9F6E8 /* AppMonitor.swift */; };
 		8BD9853F833133355953772A /* iOSIntruderPhotosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E43A26EEC5B37F0E1C08F26 /* iOSIntruderPhotosView.swift */; };
 		8D56BF1CE393830C7D465725 /* AppQuotasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBBB3E6B05FEA3327A41B98A /* AppQuotasView.swift */; };
+		996EF5889DA9FA4CC0999B56 /* iOSAppHidingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 995AE11047BD5C3B2D94E692 /* iOSAppHidingView.swift */; };
 		9A8313800C34F366758B818D /* ScheduleTemplateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B13E51D9D717379279F5F2A /* ScheduleTemplateManager.swift */; };
 		9BF4C36E7F69548779D98B4C /* VaultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6761502D80BEC8DBE1AA4AE2 /* VaultView.swift */; };
 		A0C18AC3CC493CCC78891C8E /* AlertsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 843337CB44E71F8A232EEC62 /* AlertsView.swift */; };
 		A25B6E5ACDFB18D2AEB9A35B /* ClipboardGuard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AF938CEDB043C385C353BBF /* ClipboardGuard.swift */; };
 		A4613D2CCFE60C662F0CC134 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13432AF2DB2DFC29066FB236 /* Models.swift */; };
+		A4A6AAC2DD584721DF638D1D /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CA478951B8FA86A212CC1BED /* AppIntents.framework */; };
+		A5CB8A093090046739C3E6EF /* SecureNotesSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60FEC418166B02EA2CA64D6E /* SecureNotesSync.swift */; };
 		AC8D2D3E4D6CA110BED9FF31 /* ScreenPrivacyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEF5F7239765CAF590A4C91B /* ScreenPrivacyManager.swift */; };
+		B064AEF4EA590650D51E175F /* iOSFileLockerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC371B71037939AF0E975337 /* iOSFileLockerView.swift */; };
 		B174D47DE78AF71ECAC498F2 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 926AB1334A90C00642975611 /* NetworkMonitor.swift */; };
 		B765712C3C4E9E58BDA067E2 /* ScheduleTemplatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DC033B29BD06DBD0351AA1F /* ScheduleTemplatesView.swift */; };
+		B7AB180366D9900C5506CFAB /* iOSClipboardGuard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7816734555D5E05AA02985A1 /* iOSClipboardGuard.swift */; };
+		B914BF956BC6A435B1683E16 /* iOSAppLockingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 498D120AE2976646E961496E /* iOSAppLockingView.swift */; };
+		BD6B7BB694E6962215742FB6 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E2A99FBDE214E70BA387ABC /* AppLogger.swift */; };
+		BE3A0C9C3122D2CAF4F6ACD9 /* iOSFileLockerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C9E5C262412AFAEC32DBE49 /* iOSFileLockerManager.swift */; };
 		C16964F3C225621F95192276 /* ScreenPrivacyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D57909D5B5F7462A2B88FEE8 /* ScreenPrivacyView.swift */; };
 		C24FE8F1CC6AEB9DB685878D /* VaultManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB8FBE4EB554CC600FF6DDE0 /* VaultManager.swift */; };
 		CEDAA298E28B5383129C8C31 /* RemoteControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5706467657D7417A4F615BB /* RemoteControlView.swift */; };
 		D2576936A6F17F48955ADBA3 /* PBKDF2Helper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7D05A166D18E025ACDEDA20 /* PBKDF2Helper.swift */; };
 		D2B40DAF2D2129A4B4EA25B1 /* BlockingOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3426A7D3410EE564D1F72BF /* BlockingOverlayView.swift */; };
+		D711251DB476BCE242BCD3B1 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E2A99FBDE214E70BA387ABC /* AppLogger.swift */; };
+		DD95E6212A86307EB055616E /* iOSAppLockManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C445617A04D0E60423D54A0A /* iOSAppLockManager.swift */; };
+		DEECD6624F9BB517FD5F0D06 /* iOSAppHidingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 697B597060F3BE95B3ED16E2 /* iOSAppHidingManager.swift */; };
 		E06B5CB7734206482B84A8D4 /* CloudKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 158137FEAC983C7F20959107 /* CloudKitManager.swift */; };
 		E13029DB3A33CCF782AC757E /* CryptoHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3345518D7FAB7A1B778E13E0 /* CryptoHelper.swift */; };
+		EB32F6EAEB79B0CBB8990CFE /* SecureNotesSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60FEC418166B02EA2CA64D6E /* SecureNotesSync.swift */; };
+		F0EA05E1FDEDEBC6D91F27AF /* ManagedSettings.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1BA2C64DFF08299769DF17D7 /* ManagedSettings.framework */; };
 		F1CCA0983AE043EF047B4434 /* CloudKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 158137FEAC983C7F20959107 /* CloudKitManager.swift */; };
 		F1FBC3A8A54777B16E0A23E9 /* iOSSecureNotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58EC0CF3A6146E6C01BB25DD /* iOSSecureNotesView.swift */; };
+		F58AECE7D73BC390EDBD1482 /* iOSClipboardGuardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBA10FA7C445781C85295BEA /* iOSClipboardGuardView.swift */; };
+		FC7DBEF585152D1B66F97191 /* FamilyControls.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EB072E140F901F7D3E68B8F6 /* FamilyControls.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -68,22 +89,34 @@
 		177EF647462EB2FD9277E581 /* AppProtectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppProtectionManager.swift; sourceTree = "<group>"; };
 		17A731B3BD187F11BACABBDB /* NetworkMonitorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitorView.swift; sourceTree = "<group>"; };
 		1B13E51D9D717379279F5F2A /* ScheduleTemplateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleTemplateManager.swift; sourceTree = "<group>"; };
+		1BA2C64DFF08299769DF17D7 /* ManagedSettings.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ManagedSettings.framework; path = System/Library/Frameworks/ManagedSettings.framework; sourceTree = SDKROOT; };
 		1E43A26EEC5B37F0E1C08F26 /* iOSIntruderPhotosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSIntruderPhotosView.swift; sourceTree = "<group>"; };
+		2C89B646CF3BED6682852A1B /* DeviceActivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DeviceActivity.framework; path = System/Library/Frameworks/DeviceActivity.framework; sourceTree = SDKROOT; };
+		2D7CC1F166678E35DA6F3455 /* iOSScreenPrivacyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSScreenPrivacyView.swift; sourceTree = "<group>"; };
 		3345518D7FAB7A1B778E13E0 /* CryptoHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CryptoHelper.swift; sourceTree = "<group>"; };
 		3552440740293B5C0BE39957 /* MacContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacContentView.swift; sourceTree = "<group>"; };
+		3E2A99FBDE214E70BA387ABC /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
 		4790B3D849A74237E9C9F6E8 /* AppMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMonitor.swift; sourceTree = "<group>"; };
+		498D120AE2976646E961496E /* iOSAppLockingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSAppLockingView.swift; sourceTree = "<group>"; };
 		58EC0CF3A6146E6C01BB25DD /* iOSSecureNotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSSecureNotesView.swift; sourceTree = "<group>"; };
+		60FEC418166B02EA2CA64D6E /* SecureNotesSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureNotesSync.swift; sourceTree = "<group>"; };
 		6761502D80BEC8DBE1AA4AE2 /* VaultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultView.swift; sourceTree = "<group>"; };
+		697B597060F3BE95B3ED16E2 /* iOSAppHidingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSAppHidingManager.swift; sourceTree = "<group>"; };
 		6AC456C3128977EBC38C9B21 /* iOSContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSContentView.swift; sourceTree = "<group>"; };
 		6C66F2C2D536D29202AB3B23 /* AppLocker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AppLocker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6DC033B29BD06DBD0351AA1F /* ScheduleTemplatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleTemplatesView.swift; sourceTree = "<group>"; };
 		70102F83B656C5B3A0C95472 /* SecureNotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureNotesView.swift; sourceTree = "<group>"; };
+		7816734555D5E05AA02985A1 /* iOSClipboardGuard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSClipboardGuard.swift; sourceTree = "<group>"; };
 		843337CB44E71F8A232EEC62 /* AlertsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertsView.swift; sourceTree = "<group>"; };
 		8931D2B844481366D713C2E6 /* SecureNotesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureNotesManager.swift; sourceTree = "<group>"; };
+		8C9E5C262412AFAEC32DBE49 /* iOSFileLockerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSFileLockerManager.swift; sourceTree = "<group>"; };
 		8ECBD2FB336E1BB777C270C5 /* InactivityMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InactivityMonitor.swift; sourceTree = "<group>"; };
+		915D5C62798E4501672BDD2F /* iOSFocusModeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSFocusModeManager.swift; sourceTree = "<group>"; };
 		926AB1334A90C00642975611 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
+		995AE11047BD5C3B2D94E692 /* iOSAppHidingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSAppHidingView.swift; sourceTree = "<group>"; };
 		9A932A9C64198B92A0E70FE6 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		9AF35C0E801A018A83F9EF98 /* FocusModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusModeView.swift; sourceTree = "<group>"; };
+		9CB4F00614D93601C002B2AC /* iOSScreenPrivacyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSScreenPrivacyManager.swift; sourceTree = "<group>"; };
 		A3426A7D3410EE564D1F72BF /* BlockingOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockingOverlayView.swift; sourceTree = "<group>"; };
 		A43A52D75427A122F909DC93 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A4F0F46A17D052502C37117F /* AppLockerCompanion.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = AppLockerCompanion.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -91,24 +124,53 @@
 		B733CA47117AB034CEC0D370 /* AppQuotaManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppQuotaManager.swift; sourceTree = "<group>"; };
 		BEF5F7239765CAF590A4C91B /* ScreenPrivacyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenPrivacyManager.swift; sourceTree = "<group>"; };
 		C0ECCB73AB5F53C4DE4B62CF /* IntruderManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntruderManager.swift; sourceTree = "<group>"; };
+		C445617A04D0E60423D54A0A /* iOSAppLockManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSAppLockManager.swift; sourceTree = "<group>"; };
 		C4E39D87CA8ED61D8CEBEA3F /* ClipboardGuardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardGuardView.swift; sourceTree = "<group>"; };
 		C7D05A166D18E025ACDEDA20 /* PBKDF2Helper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PBKDF2Helper.swift; sourceTree = "<group>"; };
 		C9637AFA612BEAFE89DF5C4B /* AppLockerApp_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLockerApp_iOS.swift; sourceTree = "<group>"; };
+		CA478951B8FA86A212CC1BED /* AppIntents.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppIntents.framework; path = System/Library/Frameworks/AppIntents.framework; sourceTree = SDKROOT; };
+		CA5B8C48B1C1B128EBE489F6 /* iOSFocusModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSFocusModeView.swift; sourceTree = "<group>"; };
 		D52FC0CEF73F80C284DFFED6 /* AuthenticationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationManager.swift; sourceTree = "<group>"; };
 		D57909D5B5F7462A2B88FEE8 /* ScreenPrivacyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenPrivacyView.swift; sourceTree = "<group>"; };
 		D6D26B3C88DAE3BEEF3F057E /* FileLockerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileLockerManager.swift; sourceTree = "<group>"; };
 		DB7FA2E3AAB49C2B9AED67AD /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		DB8FBE4EB554CC600FF6DDE0 /* VaultManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultManager.swift; sourceTree = "<group>"; };
+		DC371B71037939AF0E975337 /* iOSFileLockerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSFileLockerView.swift; sourceTree = "<group>"; };
+		EB072E140F901F7D3E68B8F6 /* FamilyControls.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = FamilyControls.framework; path = System/Library/Frameworks/FamilyControls.framework; sourceTree = SDKROOT; };
 		EBBB3E6B05FEA3327A41B98A /* AppQuotasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppQuotasView.swift; sourceTree = "<group>"; };
 		F45A40BE06D632D040111744 /* iOSSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSSettingsView.swift; sourceTree = "<group>"; };
 		F5706467657D7417A4F615BB /* RemoteControlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteControlView.swift; sourceTree = "<group>"; };
 		F909861232ADCC5C92170855 /* KVStoreManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KVStoreManager.swift; sourceTree = "<group>"; };
+		FBA10FA7C445781C85295BEA /* iOSClipboardGuardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSClipboardGuardView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		2390139DCC7DF52407BB8249 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A4A6AAC2DD584721DF638D1D /* AppIntents.framework in Frameworks */,
+				FC7DBEF585152D1B66F97191 /* FamilyControls.framework in Frameworks */,
+				F0EA05E1FDEDEBC6D91F27AF /* ManagedSettings.framework in Frameworks */,
+				22450B2FD09B1F8FDC358572 /* DeviceActivity.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E37646DDCC4818E75A3AFBE2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				176708E4FDCEC4FE29E2B7FE /* AppIntents.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		0A6F95F94E660487CFCCCAB2 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				3E2A99FBDE214E70BA387ABC /* AppLogger.swift */,
 				A3426A7D3410EE564D1F72BF /* BlockingOverlayView.swift */,
 				158137FEAC983C7F20959107 /* CloudKitManager.swift */,
 				3345518D7FAB7A1B778E13E0 /* CryptoHelper.swift */,
@@ -116,6 +178,7 @@
 				C0ECCB73AB5F53C4DE4B62CF /* IntruderManager.swift */,
 				13432AF2DB2DFC29066FB236 /* Models.swift */,
 				C7D05A166D18E025ACDEDA20 /* PBKDF2Helper.swift */,
+				60FEC418166B02EA2CA64D6E /* SecureNotesSync.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -127,6 +190,15 @@
 				6DC033B29BD06DBD0351AA1F /* ScheduleTemplatesView.swift */,
 			);
 			path = ScheduleTemplates;
+			sourceTree = "<group>";
+		};
+		2B1C25DBC87325FAD3E70E31 /* ClipboardGuard */ = {
+			isa = PBXGroup;
+			children = (
+				7816734555D5E05AA02985A1 /* iOSClipboardGuard.swift */,
+				FBA10FA7C445781C85295BEA /* iOSClipboardGuardView.swift */,
+			);
+			path = ClipboardGuard;
 			sourceTree = "<group>";
 		};
 		2E709FF11D49FD9524247FDF /* ClipboardGuard */ = {
@@ -144,6 +216,15 @@
 				843337CB44E71F8A232EEC62 /* AlertsView.swift */,
 			);
 			path = Alerts;
+			sourceTree = "<group>";
+		};
+		56638B2EEAF2A94E88344EEB /* ScreenPrivacy */ = {
+			isa = PBXGroup;
+			children = (
+				9CB4F00614D93601C002B2AC /* iOSScreenPrivacyManager.swift */,
+				2D7CC1F166678E35DA6F3455 /* iOSScreenPrivacyView.swift */,
+			);
+			path = ScreenPrivacy;
 			sourceTree = "<group>";
 		};
 		5C2976B4FA921790CDCB5FBA /* SecureVault */ = {
@@ -171,10 +252,16 @@
 				6AC456C3128977EBC38C9B21 /* iOSContentView.swift */,
 				F909861232ADCC5C92170855 /* KVStoreManager.swift */,
 				38C273188ADF4307784AB665 /* Alerts */,
+				D557DFE45E82E73E79DF9643 /* AppHiding */,
+				8667B086E7D2361235FA2A51 /* AppLocking */,
+				2B1C25DBC87325FAD3E70E31 /* ClipboardGuard */,
 				6D2CDADF42E778778A665E2B /* Dashboard */,
+				B219EAA6CB32600C4544144C /* FileLocker */,
+				D0A60B5D7194ED893110D27D /* FocusMode */,
 				CCF056F1893983C390CFBB7F /* IntruderPhotos */,
 				D9BF09B94DC962E892200326 /* Protection */,
 				F41050D9582AE13210467E6C /* RemoteControl */,
+				56638B2EEAF2A94E88344EEB /* ScreenPrivacy */,
 				6D9770ED3CD3EB0D02C69E9F /* SecureNotes */,
 				B5154DADD8A1C6221225AD2E /* Settings */,
 			);
@@ -214,10 +301,20 @@
 			path = AppQuotas;
 			sourceTree = "<group>";
 		};
+		8667B086E7D2361235FA2A51 /* AppLocking */ = {
+			isa = PBXGroup;
+			children = (
+				498D120AE2976646E961496E /* iOSAppLockingView.swift */,
+				C445617A04D0E60423D54A0A /* iOSAppLockManager.swift */,
+			);
+			path = AppLocking;
+			sourceTree = "<group>";
+		};
 		8E0F6311E271BB1A63CD3BF9 = {
 			isa = PBXGroup;
 			children = (
 				7C4ED9A637C730899D5FB9E7 /* Sources */,
+				C976C021B300326072B72DD3 /* Frameworks */,
 				CBEA73997D78AB8F6D3E9A93 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -264,6 +361,15 @@
 			path = AppLocker;
 			sourceTree = "<group>";
 		};
+		B219EAA6CB32600C4544144C /* FileLocker */ = {
+			isa = PBXGroup;
+			children = (
+				8C9E5C262412AFAEC32DBE49 /* iOSFileLockerManager.swift */,
+				DC371B71037939AF0E975337 /* iOSFileLockerView.swift */,
+			);
+			path = FileLocker;
+			sourceTree = "<group>";
+		};
 		B5154DADD8A1C6221225AD2E /* Settings */ = {
 			isa = PBXGroup;
 			children = (
@@ -281,6 +387,17 @@
 			path = SecureNotes;
 			sourceTree = "<group>";
 		};
+		C976C021B300326072B72DD3 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				CA478951B8FA86A212CC1BED /* AppIntents.framework */,
+				2C89B646CF3BED6682852A1B /* DeviceActivity.framework */,
+				EB072E140F901F7D3E68B8F6 /* FamilyControls.framework */,
+				1BA2C64DFF08299769DF17D7 /* ManagedSettings.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		CBEA73997D78AB8F6D3E9A93 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -296,6 +413,24 @@
 				1E43A26EEC5B37F0E1C08F26 /* iOSIntruderPhotosView.swift */,
 			);
 			path = IntruderPhotos;
+			sourceTree = "<group>";
+		};
+		D0A60B5D7194ED893110D27D /* FocusMode */ = {
+			isa = PBXGroup;
+			children = (
+				915D5C62798E4501672BDD2F /* iOSFocusModeManager.swift */,
+				CA5B8C48B1C1B128EBE489F6 /* iOSFocusModeView.swift */,
+			);
+			path = FocusMode;
+			sourceTree = "<group>";
+		};
+		D557DFE45E82E73E79DF9643 /* AppHiding */ = {
+			isa = PBXGroup;
+			children = (
+				697B597060F3BE95B3ED16E2 /* iOSAppHidingManager.swift */,
+				995AE11047BD5C3B2D94E692 /* iOSAppHidingView.swift */,
+			);
+			path = AppHiding;
 			sourceTree = "<group>";
 		};
 		D9BF09B94DC962E892200326 /* Protection */ = {
@@ -332,6 +467,7 @@
 			buildPhases = (
 				5C51E605B5FB1088D2A76E79 /* Sources */,
 				AD173A55884ADCCF29B7F360 /* Resources */,
+				E37646DDCC4818E75A3AFBE2 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -350,6 +486,7 @@
 			buildPhases = (
 				02ED91286BC6E064EBB7F8FA /* Sources */,
 				67FF3B86AD485EFC7A650A68 /* Resources */,
+				2390139DCC7DF52407BB8249 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -372,15 +509,14 @@
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
 					838A50B8352CDA35BE9467DB = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = 48P296BWWP;
 					};
 					B56C08CC201FF41AF5D741F4 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = 48P296BWWP;
 					};
 				};
 			};
 			buildConfigurationList = A6A8C1B754898942F8811D6C /* Build configuration list for PBXProject "AppLocker" */;
-			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -390,6 +526,7 @@
 			mainGroup = 8E0F6311E271BB1A63CD3BF9;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
+			productRefGroup = CBEA73997D78AB8F6D3E9A93 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -425,6 +562,7 @@
 			files = (
 				A0C18AC3CC493CCC78891C8E /* AlertsView.swift in Sources */,
 				4E13096445370FFF8ACCC0EB /* AppLockerApp_iOS.swift in Sources */,
+				D711251DB476BCE242BCD3B1 /* AppLogger.swift in Sources */,
 				5146FBDE007954935A78A13A /* AppProtectionManager.swift in Sources */,
 				75E6436284E9AAEE50F34794 /* BlockingOverlayView.swift in Sources */,
 				F1CCA0983AE043EF047B4434 /* CloudKitManager.swift in Sources */,
@@ -437,8 +575,21 @@
 				4E5590B48E8922194440DC6B /* NotificationManager.swift in Sources */,
 				097A74D9D47DF5DBEC11132F /* PBKDF2Helper.swift in Sources */,
 				CEDAA298E28B5383129C8C31 /* RemoteControlView.swift in Sources */,
+				EB32F6EAEB79B0CBB8990CFE /* SecureNotesSync.swift in Sources */,
+				DEECD6624F9BB517FD5F0D06 /* iOSAppHidingManager.swift in Sources */,
+				996EF5889DA9FA4CC0999B56 /* iOSAppHidingView.swift in Sources */,
+				DD95E6212A86307EB055616E /* iOSAppLockManager.swift in Sources */,
+				B914BF956BC6A435B1683E16 /* iOSAppLockingView.swift in Sources */,
+				B7AB180366D9900C5506CFAB /* iOSClipboardGuard.swift in Sources */,
+				F58AECE7D73BC390EDBD1482 /* iOSClipboardGuardView.swift in Sources */,
 				7A65D5299B62348177C82CC5 /* iOSContentView.swift in Sources */,
+				BE3A0C9C3122D2CAF4F6ACD9 /* iOSFileLockerManager.swift in Sources */,
+				B064AEF4EA590650D51E175F /* iOSFileLockerView.swift in Sources */,
+				4423DE2C388A7F40AD5CDA6F /* iOSFocusModeManager.swift in Sources */,
+				32A566FDF05B67EB1EDB728A /* iOSFocusModeView.swift in Sources */,
 				8BD9853F833133355953772A /* iOSIntruderPhotosView.swift in Sources */,
+				3EC60BE53E09E672D0547301 /* iOSScreenPrivacyManager.swift in Sources */,
+				6556809949ABE548AE81130A /* iOSScreenPrivacyView.swift in Sources */,
 				F1FBC3A8A54777B16E0A23E9 /* iOSSecureNotesView.swift in Sources */,
 				2BE55D2B9140CAB6EBBE595F /* iOSSettingsView.swift in Sources */,
 			);
@@ -448,6 +599,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BD6B7BB694E6962215742FB6 /* AppLogger.swift in Sources */,
 				84ABBCC2EFF83E5301080711 /* AppMonitor.swift in Sources */,
 				0B7CB975DCBA36CE5A19A79B /* AppQuotaManager.swift in Sources */,
 				8D56BF1CE393830C7D465725 /* AppQuotasView.swift in Sources */,
@@ -475,6 +627,7 @@
 				AC8D2D3E4D6CA110BED9FF31 /* ScreenPrivacyManager.swift in Sources */,
 				C16964F3C225621F95192276 /* ScreenPrivacyView.swift in Sources */,
 				5788CAB1C912EA30E50902FC /* SecureNotesManager.swift in Sources */,
+				A5CB8A093090046739C3E6EF /* SecureNotesSync.swift in Sources */,
 				837440CABC4F8D6EC4DD3954 /* SecureNotesView.swift in Sources */,
 				C24FE8F1CC6AEB9DB685878D /* VaultManager.swift in Sources */,
 				9BF4C36E7F69548779D98B4C /* VaultView.swift in Sources */,
@@ -490,6 +643,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = SupportingFiles/macOS/AppLocker.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = SupportingFiles/macOS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -499,6 +653,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mirxa.AppLocker;
 				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
 			};
 			name = Debug;
 		};
@@ -509,6 +664,7 @@
 				CODE_SIGN_ENTITLEMENTS = SupportingFiles/macOS/AppLocker.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEAD_CODE_STRIPPING = YES;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = SupportingFiles/macOS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -518,6 +674,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mirxa.AppLocker;
 				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 			};
 			name = Release;
@@ -537,6 +694,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.mirxa.AppLocker.Companion;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -578,7 +736,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 48P296BWWP;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -597,7 +755,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 3.1;
+				MARKETING_VERSION = 3.6;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -622,6 +780,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.mirxa.AppLocker.Companion;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -662,7 +821,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 48P296BWWP;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -675,7 +834,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 3.1;
+				MARKETING_VERSION = 3.6;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

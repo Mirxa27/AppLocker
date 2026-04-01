@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Upgrade macOS cryptographic security to professional standard, add anti-tamper protections, encrypt all data at rest, wire real-time CloudKit push notifications, and build a full iOS companion dashboard replacing the current 3-button stub.
+**Goal:** Upgrade macOS cryptographic security to professional standard, add anti-tamper protections, encrypt all data at rest, wire real-time CloudKit push notifications, and build a full iOS companion dashboard replacing the current 3-button shell.
 
 **Architecture:** macOS hardening runs within the existing `@MainActor` singleton pattern; new shared files (`CloudKitManager`, `InactivityMonitor`, `PBKDF2Helper`) are `#if os(macOS)` / `#if os(iOS)` guarded where needed. The iOS app is rebuilt as a `TabView` root gated behind biometric/PIN auth. CloudKit private database carries events between platforms in real time.
 
@@ -1230,9 +1230,9 @@ struct ScreenRecordingOverlay: View {
 ```bash
 swift build 2>&1 | tail -5
 ```
-Expected: `Build complete!` (tabs reference views not yet created — OK if they're stubbed)
+Expected: `Build complete!` (intermediate milestones may compile before every tab lands)
 
-> **Stub the missing tab views** to unblock the build (add empty structs in a temp file if needed):
+> **Add temporary scaffolding for missing tab views** only to unblock this milestone:
 > `struct DashboardView: View { var body: some View { Text("Dashboard") } }`
 
 **Step 4: Commit**
@@ -1967,9 +1967,9 @@ git commit -m "feat: iOS Settings tab — PIN management, biometric status, secu
 
 ## Task 18 — Final Integration + Full Release Build
 
-**Step 1: Remove any placeholder stubs from Task 11**
+**Step 1: Remove any temporary scaffolding from Task 11**
 
-Delete temporary stub structs used to unblock the build.
+Delete the temporary structs used to unblock the intermediate build.
 
 **Step 2: Full release build**
 
