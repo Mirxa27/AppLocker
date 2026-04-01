@@ -1,4 +1,4 @@
-.PHONY: all generate-project build build-macos build-ios release release-signed publish-appstore clean test install help
+.PHONY: all generate-project build build-macos build-ios release release-signed publish-appstore clean test install verify-entitlements help
 
 all: build
 
@@ -15,6 +15,9 @@ build-ios: generate-project
 
 test:
 	swift test --package-path /Users/abdullahmirxa/Documents/GitHub/AppLocker
+
+verify-entitlements:
+	@/Users/abdullahmirxa/Documents/GitHub/AppLocker/scripts/verify-entitlements.sh
 
 release: generate-project
 	@/Users/abdullahmirxa/Documents/GitHub/AppLocker/scripts/build-release.sh
@@ -38,6 +41,7 @@ help:
 	@echo "  make build-macos       Build the macOS app with Xcode"
 	@echo "  make build-ios         Build the iOS companion for iOS Simulator"
 	@echo "  make test              Run SwiftPM unit tests"
+	@echo "  make verify-entitlements  Fail if macOS/iOS entitlements plists are empty/corrupt"
 	@echo "  make release           Archive and package an unsigned local macOS release"
 	@echo "  make release-signed    Archive, sign, and optionally notarize a macOS release"
 	@echo "  make publish-appstore  Archive and export iOS + macOS App Store artifacts"

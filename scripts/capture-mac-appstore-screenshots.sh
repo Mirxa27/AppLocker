@@ -7,6 +7,8 @@
 #
 # Environment:
 #   APP — path to AppLocker.app bundle (skips build if set and exists)
+#   APPLOCKER_SCREENSHOT_SIZE — width x height (default 1440x900). Also 1280x800, 2560x1600, etc.
+#   APPLOCKER_SCREENSHOT_WIDTH / HEIGHT — override numeric size if SIZE unset
 #
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -45,6 +47,8 @@ else
   rm -rf "$DD"
   (cd "$ROOT" && xcodegen generate --spec project.yml >/dev/null)
   LOG=$(mktemp)
+  # Force products/intermediates under -derivedDataPath. Without SYMROOT/OBJROOT, some Xcode
+  # configurations (custom build locations) place Debug output in /tmp/Build instead.
   if ! xcodebuild \
     -project "$ROOT/AppLocker.xcodeproj" \
     -scheme AppLocker \
@@ -52,6 +56,8 @@ else
     -destination 'platform=macOS,arch=arm64' \
     CODE_SIGNING_ALLOWED=NO \
     -derivedDataPath "$DD" \
+    SYMROOT="$DD/Build/Products" \
+    OBJROOT="$DD/Build/Intermediates.noindex" \
     -quiet \
     build >"$LOG" 2>&1; then
     echo "xcodebuild failed:" >&2
@@ -68,6 +74,8 @@ if [[ -z "${APP_BUNDLE:-}" ]] || [[ ! -d "$APP_BUNDLE" ]]; then
   exit 1
 fi
 
+echo "Using app bundle: $APP_BUNDLE"
+
 BIN="$APP_BUNDLE/Contents/MacOS/AppLocker"
 if [[ ! -x "$BIN" ]]; then
   echo "Could not find executable at: $BIN" >&2
@@ -78,6 +86,7 @@ NAME="${2:-01-main-1440x900.png}"
 export APPLOCKER_CAPTURE_SCREENSHOT=1
 export APPLOCKER_SCREENSHOT_PATH="$OUT/$NAME"
 export APPLOCKER_SCREENSHOT_DELAY="${APPLOCKER_SCREENSHOT_DELAY:-4}"
+export APPLOCKER_SCREENSHOT_SIZE="${APPLOCKER_SCREENSHOT_SIZE:-1440x900}"
 
 echo "Writing $APPLOCKER_SCREENSHOT_PATH (delay ${APPLOCKER_SCREENSHOT_DELAY}s)…"
 "$BIN"

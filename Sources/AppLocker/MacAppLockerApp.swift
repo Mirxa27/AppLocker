@@ -109,6 +109,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
 
         let outputPath = env["APPLOCKER_SCREENSHOT_PATH"] ?? (NSTemporaryDirectory() + "AppLocker-mac-asc.png")
         let delay = Double(env["APPLOCKER_SCREENSHOT_DELAY"] ?? "") ?? 1.0
+        let (captureWidth, captureHeight) = Self.appStoreScreenshotDimensions(from: env)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
             guard let targetWindow = window ?? NSApp.windows.first(where: { !($0 is NSPanel) }),
@@ -117,12 +118,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
                 return
             }
 
-            // Force an App Store accepted screenshot size for direct upload.
-            targetWindow.setContentSize(NSSize(width: 1440, height: 900))
+            // App Store Connect accepts several 16:10 sizes (e.g. 1280×800, 1440×900, 2560×1600).
+            targetWindow.setContentSize(NSSize(width: captureWidth, height: captureHeight))
             targetWindow.layoutIfNeeded()
             contentView.layoutSubtreeIfNeeded()
 
-            let captureRect = NSRect(origin: .zero, size: NSSize(width: 1440, height: 900))
+            let captureRect = NSRect(origin: .zero, size: NSSize(width: captureWidth, height: captureHeight))
             guard let bitmap = NSBitmapImageRep(
                 bitmapDataPlanes: nil,
                 pixelsWide: Int(captureRect.width),
@@ -147,6 +148,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
 
             NSApp.terminate(nil)
         }
+    }
+
+    /// Reads `APPLOCKER_SCREENSHOT_SIZE` (`1440x900`) or `APPLOCKER_SCREENSHOT_WIDTH` / `HEIGHT`.
+    private static func appStoreScreenshotDimensions(from env: [String: String]) -> (CGFloat, CGFloat) {
+        let defaultW: CGFloat = 1440
+        let defaultH: CGFloat = 900
+        if let raw = env["APPLOCKER_SCREENSHOT_SIZE"], let xIndex = raw.firstIndex(of: "x"), xIndex > raw.startIndex {
+            let left = String(raw[..<xIndex])
+            let right = String(raw[raw.index(after: xIndex)...])
+            if let w = Double(left), let h = Double(right), w >= 100, h >= 100 {
+                return (CGFloat(w), CGFloat(h))
+            }
+        }
+        let w = Double(env["APPLOCKER_SCREENSHOT_WIDTH"] ?? "") ?? Double(defaultW)
+        let h = Double(env["APPLOCKER_SCREENSHOT_HEIGHT"] ?? "") ?? Double(defaultH)
+        return (CGFloat(w), CGFloat(h))
     }
 
     // MARK: - Anti-Debugger

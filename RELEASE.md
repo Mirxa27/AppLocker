@@ -106,8 +106,20 @@ Release scripts read the version from the Xcode build settings generated from `p
 
 Update versioning in `project.yml` before packaging a release.
 
+## App Store Connect — macOS resubmission (common rejections)
+
+If review cites **2.1.0 (App Completeness)**, **2.3.3 (Accurate Metadata)**, or **2.4.5 (Hardware Compatibility)**:
+
+1. **Entitlements must not be empty.** A corrupted `SupportingFiles/macOS/AppLocker.entitlements` (only `<dict/>`) breaks sandboxing, iCloud, and camera usage—often leading to crashes or “incomplete” behavior in review. Run `make verify-entitlements` before every archive; restore with `git checkout HEAD -- SupportingFiles/macOS/AppLocker.entitlements` if needed.
+2. **Metadata (2.3.3):** Upload enough Mac screenshots (up to 10) that match the **current** UI. Use `./scripts/capture-mac-appstore-screenshots.sh` per shot; set `APPLOCKER_SCREENSHOT_SIZE` (e.g. `1280x800`, `1440x900`, or `2560x1600`) so sizes match [App Store Connect requirements](https://developer.apple.com/help/app-store-connect/reference/screenshot-specifications). Show real flows (dashboard, locked apps, settings)—not placeholders.
+3. **Review notes:** If the app needs Accessibility permission or a passcode before use, explain the steps in App Review Information so testers can enable features without guessing.
+4. **Hardware (2.4.5):** Release builds are archived for standard macOS architectures via Xcode; test on both Apple Silicon and Intel if possible. If the app is Apple Silicon–only, say so in the description and review notes (otherwise ensure a universal or separate Intel build per your App Store plan).
+
+`scripts/publish-appstore.sh` runs `verify-entitlements` automatically before building.
+
 ## Verification Checklist
 
+- `make verify-entitlements` passes
 - `make test` passes
 - `make build-macos` passes
 - `make build-ios` passes on a machine with a compatible iOS simulator runtime
