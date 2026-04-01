@@ -58,4 +58,4 @@ Always confirm **platform** (iOS vs macOS) and **app record IDs** from `get_app_
 ## Additional detail
 
 - MCP env var names and tool inventory: [reference.md](reference.md)
-- MCP npm README: [tools/app-store-connect-mcp/README.md](../../tools/app-store-connect-mcp/README.md)
+- Pinned MCP package README: [tools/app-store-connect-mcp/README.md](../../tools/app-store-connect-mcp/README.md)
