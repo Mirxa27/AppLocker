@@ -247,25 +247,28 @@ upload_package() {
         return 0
     fi
 
-    if [ -z "$ASC_API_KEY_ID" ] || [ -z "$ASC_API_ISSUER_ID" ] || [ -z "$ASC_API_KEY_PATH" ]; then
-        echo -e "${RED}Upload requested, but ASC_API_KEY_ID, ASC_API_ISSUER_ID, and ASC_API_KEY_PATH are not all set.${NC}"
+    # Prefer App Store Connect API key; fall back to Apple ID + app-specific password (not your Apple ID login password).
+    local -a auth_args
+    if [ -n "${ASC_API_KEY_ID:-}" ] && [ -n "${ASC_API_ISSUER_ID:-}" ] && [ -n "${ASC_API_KEY_PATH:-}" ]; then
+        auth_args=(--api-key "$ASC_API_KEY_ID" --api-issuer "$ASC_API_ISSUER_ID" --p8-file-path "$ASC_API_KEY_PATH")
+    elif [ -n "${APPLE_ID:-}" ] && [ -n "${APPLE_ASC_PASSWORD:-}" ]; then
+        auth_args=(-u "$APPLE_ID" -p "@env:APPLE_ASC_PASSWORD")
+        echo -e "${YELLOW}Using APPLE_ID + APPLE_ASC_PASSWORD (app-specific) for upload. Prefer ASC_API_* API keys for CI.${NC}"
+    else
+        echo -e "${RED}Upload requested. Set either (ASC_API_KEY_ID, ASC_API_ISSUER_ID, ASC_API_KEY_PATH) or (APPLE_ID, APPLE_ASC_PASSWORD).${NC}"
         exit 1
     fi
 
     echo -e "${YELLOW}Validating ${label} with App Store Connect...${NC}"
     xcrun altool \
         --validate-app "$package_path" \
-        --api-key "$ASC_API_KEY_ID" \
-        --api-issuer "$ASC_API_ISSUER_ID" \
-        --p8-file-path "$ASC_API_KEY_PATH" \
+        "${auth_args[@]}" \
         --output-format json
 
     echo -e "${YELLOW}Uploading ${label} to App Store Connect...${NC}"
     xcrun altool \
         --upload-package "$package_path" \
-        --api-key "$ASC_API_KEY_ID" \
-        --api-issuer "$ASC_API_ISSUER_ID" \
-        --p8-file-path "$ASC_API_KEY_PATH" \
+        "${auth_args[@]}" \
         --output-format json
 }
 
